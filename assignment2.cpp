@@ -85,7 +85,7 @@ vector<GLfloat> to_cartesian_coord(vector<GLfloat> homogenous_coords) {
 // Definition of a translation matrix
 vector<GLfloat> translation_matrix (float dx, float dy, float dz) {
     vector<GLfloat> translate_mat = {
-        +1.0f, +0.0f, +0.0f, dx
+        +1.0f, +0.0f, +0.0f, dx,
         +0.0f, +1.0f, +0.0f, dy,
         +0.0f, +0.0f, +1.0f, dz,
         +0.0f, +0.0f, +0.0f, +1.0f
@@ -148,15 +148,30 @@ vector<GLfloat> rotation_matrix_z (float theta) {
 vector<GLfloat> mat_mult(vector<GLfloat> A, vector<GLfloat> B) {
     vector<GLfloat> result;
     GLfloat multiplied_answer;
+    // cout << "Hello \n";
+    // for(int i = 0; i < A.size(); i++) {
+    //     cout << "A" << A[i] << "\n";
+    // }
 
-        for (int i = 0; i < A.size(); i+=4) {
+    // for(int i = 0; i < B.size(); i++) {
+    //     cout << "B" << B[i] << "\n";
+    // }
+
+
+        for (int i = 0; i < A.size(); i++) {
             multiplied_answer = 0;
-            for(int j = 0; j < B.size(); j++){
-                // cout << "A " << A[i+j] << " \n" ;
-                // cout << "B " << B[j] << " \n";
-                multiplied_answer += A[i+j] * B[j];
-                // cout << "multiplied_answer " << multiplied_answer << " \n";
+            vector<GLfloat> set_of_coords;
+            set_of_coords.clear();
+            for(int k = i*4; k < i*4+4; k++) {
+                set_of_coords.push_back(B[k]);
+                // cout << "set " << B[k] << " \n";
             }
+            for(int j = 0; j < 4; j++){
+                cout << "A " << A[i+j] << " \n" ;
+                cout << "B " << set_of_coords[j] << " \n";
+                multiplied_answer += A[i+j] * set_of_coords[j];
+            }
+                cout << "multiplied_answer " << multiplied_answer << " \n";
                 result.push_back(multiplied_answer);  
         }
     
@@ -168,11 +183,15 @@ vector<GLfloat> build_cube() {
     vector<GLfloat> result;
     
     vector<GLfloat> initial_plane = to_homogenous_coord(init_plane());
-
-    for(int i = 0; i < initial_plane.size(); i++) {
-        vector<GLfloat> side_1 = mat_mult(initial_plane, translation_matrix(2.0f, 0.0f,0.0f));
-    }
+    vector<GLfloat> translated_matrix = translation_matrix(0.0f, 0.0f, 0.0f);
+    vector<GLfloat> side_1 = mat_mult(translated_matrix, initial_plane);
+    // for(int i = 0; i < initial_plane.size(); i++) {
+    //     cout << "Side one vertices before " << initial_plane[i] << " \n";
+    //     // result.push_back(side_1[i]);
+    // }
+    side_1 = to_cartesian_coord(side_1);
     for(int i = 0; i < side_1.size(); i++) {
+        // cout << "Side one vertices after " << side_1[i] << " \n";
         result.push_back(side_1[i]);
     }
     
@@ -216,7 +235,8 @@ void init_camera() {
 
 // Construct the scene using objects built from cubes/prisms
 GLfloat* init_scene() {
-    
+    GLfloat* vertex_cube = vector2array(build_cube());
+    return vertex_cube;
 }
 
 // Construct the color mapping of the scene
@@ -229,17 +249,17 @@ void display_func() {
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-
-
-
     
+    cout << "hello \n";
+
     //pass the color pointer
     // glColorPointer(3,     
     //                GL_FLOAT, 
     //                0,       
     //                colors);
-    vector<GLfloat> vertex_cube = build_cube();
-    GLfloat* cube = vector2array(vertex_cube);
+    
+
+    GLfloat* cube = init_scene();
     
     glVertexPointer(3,          
                     GL_FLOAT,  
@@ -250,10 +270,7 @@ void display_func() {
     
     glFlush();          //Finish rendering
     glutSwapBuffers();
-    // Perform display functions
     
-    glFlush();			//Finish rendering
-    glutSwapBuffers();
 }
 
 
@@ -284,6 +301,7 @@ int main (int argc, char **argv) {
     
     // Set up our display function
     glutDisplayFunc(display_func);
+
     // Render our world
     glutMainLoop();
 
