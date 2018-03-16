@@ -108,11 +108,13 @@ vector<GLfloat> scaling_matrix (float sx, float sy, float sz) {
 
 // Definition of a rotation matrix along the x-axis theta degrees
 vector<GLfloat> rotation_matrix_x (float theta) {
+
+    double rad = (double)M_PI*theta/180.0f;
     vector<GLfloat> rotate_mat_x= {
         +1.0f, +0.0f, +0.0f, +0.0f,
-        +0.0f, +1.0f, +0.0f, +0.0f,
-        +0.0f, +0.0f, cos(theta), -sin(theta),
-        +0.0f, +0.0f, sin(theta), cos(theta)
+        +0.0f, cos(rad), -sin(rad), +0.0f,
+        +0.0f, sin(rad), cos(rad), +0.0f,
+        +0.0f, +0.0f, +0.0f, 1
     };
 
     return rotate_mat_x;
@@ -121,10 +123,12 @@ vector<GLfloat> rotation_matrix_x (float theta) {
 
 // Definition of a rotation matrix along the y-axis by theta degrees
 vector<GLfloat> rotation_matrix_y (float theta) {
+
+    double rad = (double)M_PI*theta/180.0f;
     vector<GLfloat> rotate_mat_y= {
-        cos(theta), +0.0f, sin(theta), +0.0f,
+        cos(rad), +0.0f, sin(rad), +0.0f,
         +0.0f, +1.0f, +0.0f, +0.0f,
-        -sin(theta), +0.0f, cos(theta), +0.0f,
+        -sin(rad), +0.0f, cos(rad), +0.0f,
         +0.0f, +0.0f, +0.0f, +1.0f
     };
     
@@ -134,9 +138,11 @@ vector<GLfloat> rotation_matrix_y (float theta) {
 
 // Definition of a rotation matrix along the z-axis by theta degrees
 vector<GLfloat> rotation_matrix_z (float theta) {
+
+    double rad = (double)M_PI*theta/180.0f;
     vector<GLfloat> rotate_mat_z= {
-        cos(theta), -sin(theta), +0.0f, +0.0f,
-        sin(theta), cos(theta), +0.0f, +0.0f,
+        cos(rad), -sin(rad), +0.0f, +0.0f,
+        sin(rad), cos(rad), +0.0f, +0.0f,
         +0.0f, +0.0f, +1.0f, +0.0f,
         +0.0f, +0.0f, +0.0f, +1.0f
     };
@@ -147,34 +153,22 @@ vector<GLfloat> rotation_matrix_z (float theta) {
 // Perform matrix multiplication for A B
 vector<GLfloat> mat_mult(vector<GLfloat> A, vector<GLfloat> B) {
     vector<GLfloat> result;
-    GLfloat multiplied_answer;
-    // cout << "Hello \n";
-    // for(int i = 0; i < A.size(); i++) {
-    //     cout << "A" << A[i] << "\n";
-    // }
-
-    // for(int i = 0; i < B.size(); i++) {
-    //     cout << "B" << B[i] << "\n";
-    // }
-
-
-        for (int i = 0; i < A.size(); i++) {
-            multiplied_answer = 0;
-            vector<GLfloat> set_of_coords;
-            set_of_coords.clear();
-            for(int k = i*4; k < i*4+4; k++) {
-                set_of_coords.push_back(B[k]);
-                // cout << "set " << B[k] << " \n";
-            }
-            for(int j = 0; j < 4; j++){
-                cout << "A " << A[i+j] << " \n" ;
-                cout << "B " << set_of_coords[j] << " \n";
-                multiplied_answer += A[i+j] * set_of_coords[j];
-            }
-                cout << "multiplied_answer " << multiplied_answer << " \n";
-                result.push_back(multiplied_answer);  
-        }
+    float multiplied_answer;
     
+    for(int k = 0; k < B.size(); k+=4) {
+        for (int i = 0; i < A.size(); i+=4) {
+                multiplied_answer = 0;
+                int l = 0;
+                for(int j = k; j < k + 4; j++) {
+                    // cout << "A " << A[i+l] << " \n" ;
+                    // cout << "B " << B[j] << " \n";
+                    multiplied_answer += A[i+l] * B[j];
+                    // cout << "multiplied_answer " << multiplied_answer << " \n";
+                    l++;
+                }
+                    result.push_back(multiplied_answer);  
+        }
+    }
     return result;
 }
 
@@ -183,18 +177,29 @@ vector<GLfloat> build_cube() {
     vector<GLfloat> result;
     
     vector<GLfloat> initial_plane = to_homogenous_coord(init_plane());
-    vector<GLfloat> translated_matrix = translation_matrix(0.0f, 0.0f, 0.0f);
-    vector<GLfloat> side_1 = mat_mult(translated_matrix, initial_plane);
-    // for(int i = 0; i < initial_plane.size(); i++) {
-    //     cout << "Side one vertices before " << initial_plane[i] << " \n";
-    //     // result.push_back(side_1[i]);
-    // }
-    side_1 = to_cartesian_coord(side_1);
-    for(int i = 0; i < side_1.size(); i++) {
-        // cout << "Side one vertices after " << side_1[i] << " \n";
-        result.push_back(side_1[i]);
-    }
+
+    vector<vector<GLfloat>> sides_vector; 
+
+    sides_vector.push_back(mat_mult(translation_matrix(0.0f, 0.0f, 0.5f), initial_plane));
+
+    sides_vector.push_back(mat_mult(translation_matrix(-0.5f, 0.0f, 0.0f), mat_mult(rotation_matrix_y(-90), initial_plane)));
+
+    sides_vector.push_back(mat_mult(translation_matrix(0.5f, 0.0f, 0.0f), mat_mult(rotation_matrix_y(90), initial_plane)));
+
+    sides_vector.push_back(mat_mult(translation_matrix(0.0f, 0.0f, -0.5f), mat_mult(rotation_matrix_y(180), initial_plane)));
+
+    sides_vector.push_back(mat_mult(translation_matrix(0.0f, 0.5f, 0.0f), mat_mult(rotation_matrix_x(-90), initial_plane)));
+
+    sides_vector.push_back(mat_mult(translation_matrix(0.0f, -0.5f, 0.0f), mat_mult(rotation_matrix_x(90), initial_plane)));
+
+
+
     
+    for(int i = 0; i < sides_vector.size(); i++){
+        for(int j = 0; j < sides_vector[i].size(); j++) {
+            result.push_back(sides_vector[i][j]);
+        }
+    }
     return result;
 }
 
@@ -228,21 +233,32 @@ void init_camera() {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     // Define a 50 degree field of view, 1:1 aspect ratio, near and far planes at 3 and 7
-    gluPerspective(50.0, 1.0, 2.0, 10.0);
+    gluPerspective(50.0, 1.0, 2.0, 50.0);
     // Position camera at (2, 3, 5), attention at (0, 0, 0), up at (0, 1, 0)
-    gluLookAt(2.0, 6.0, 5.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+    gluLookAt(15.0, 7.0, 15.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 }
 
 // Construct the scene using objects built from cubes/prisms
 GLfloat* init_scene() {
-    GLfloat* vertex_cube = vector2array(build_cube());
-    return vertex_cube;
+
+    vector<GLfloat> unit_cube = build_cube();
+
+    vector<GLfloat> leg_1 = mat_mult(translation_matrix(0.0f, 0.0f, 0.0f), mat_mult(scaling_matrix(1.0f, 7.5f, 1.0f), unit_cube));
+    vector<GLfloat> leg_2 = mat_mult(translation_matrix(0.0f, 0.0f, 0.0f), mat_mult(scaling_matrix(1.0f, 7.5f, 1.0f), unit_cube));
+
+
+
+    leg_1 = to_cartesian_coord(leg_1);
+
+    GLfloat* objects = vector2array(leg_1);
+    return objects;
 }
 
 // Construct the color mapping of the scene
 // GLfloat* init_color() {
 //     return nullptr;
 // }
+float theta = 0.0;
 
 void display_func() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -250,7 +266,10 @@ void display_func() {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     
-    cout << "hello \n";
+
+    // glRotatef(theta, 0.0, 1.0, 0.0);
+    // glRotatef(theta, 1.0, 0.0, 0.0);
+    // cout << "hello \n";
 
     //pass the color pointer
     // glColorPointer(3,     
@@ -273,13 +292,17 @@ void display_func() {
     
 }
 
+void idle_func() {
+    theta = theta+0.3;
+    display_func();
+}
 
 int main (int argc, char **argv) {
-    // vector<GLfloat> homogenous_coords = to_homogenous_coord(init_plane());
+    vector<GLfloat> homogenous_coords = to_homogenous_coord(init_plane());
 
     // vector<GLfloat> cartesian_coords = to_cartesian_coord(homogenous_coords);
 
-    // vector<GLfloat> test = {2,2,2,1};
+    // vector<GLfloat> test = {+1.0,+1.0,+1.0,+1.0, +2.0, +2.0, +2.0, +2.0};
 
     // vector<GLfloat> answer = mat_mult(homogenous_coords, test);    
     
@@ -302,6 +325,7 @@ int main (int argc, char **argv) {
     // Set up our display function
     glutDisplayFunc(display_func);
 
+    glutIdleFunc(idle_func);
     // Render our world
     glutMainLoop();
 
