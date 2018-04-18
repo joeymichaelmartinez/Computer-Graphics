@@ -28,7 +28,7 @@
 #include <vector>
 using namespace std;
 
-
+int number_of_sides;
 
 /**************************************************
  *              Object Model Class                *
@@ -105,7 +105,7 @@ vector<GLfloat> to_cartesian_coord(vector<GLfloat> homogenous_coords) {
 
 // Definition of a translation matrix
 vector<GLfloat> translation_matrix (float dx, float dy, float dz) {
-        vector<GLfloat> translate_mat = {
+    vector<GLfloat> translate_mat = {
         +1.0f, +0.0f, +0.0f, dx,
         +0.0f, +1.0f, +0.0f, dy,
         +0.0f, +0.0f, +1.0f, dz,
@@ -331,6 +331,7 @@ void setup() {
 }
 
 void init_camera() {
+    // Camera parameters
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluPerspective(50.0, 1.0, 2.0, 50.0);
