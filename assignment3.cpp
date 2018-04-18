@@ -55,7 +55,6 @@ public:
     void set_colors(vector<GLfloat> colors) { _colors = colors; };
 };
 
-
 /**************************************************
  *  Rectangular Prisms via Hierarchical Modeling  *
  *                                                *
@@ -175,13 +174,13 @@ vector<GLfloat> mat_mult(vector<GLfloat> A, vector<GLfloat> B) {
     
     for(int k = 0; k < B.size(); k+=4) {
         for (int i = 0; i < A.size(); i+=4) {
-                multiplied_answer = 0;
-                int l = 0;
-                for(int j = k; j < k + 4; j++) {
-                    multiplied_answer += A[i+l] * B[j];
-                    l++;
-                }
-                    result.push_back(multiplied_answer);  
+            multiplied_answer = 0;
+            int l = 0;
+            for(int j = k; j < k + 4; j++) {
+                multiplied_answer += A[i+l] * B[j];
+                l++;
+            }
+            result.push_back(multiplied_answer);  
         }
     }
     return result;
@@ -230,9 +229,12 @@ vector<GLfloat> build_cube() {
 vector<GLfloat> generate_normals(vector<GLfloat> points) {
     vector<GLfloat> normals;
     
-    // Note: each plane (quad) contains 4 points, choose the points
-    // to generate your vectors such that the normals (given by the
-    // cross product, point to the correct direction
+
+    for(int j = 0; j < points.size(); j+=3) {
+        for(int j = 0; j < points.size() - 3; j+=3) {
+            q[j] = points[j] - points[j + 3]
+        }
+    }
     
     return normals;
 }
@@ -241,6 +243,12 @@ vector<GLfloat> generate_normals(vector<GLfloat> points) {
 vector<GLfloat> cross_product(vector<GLfloat> A, vector<GLfloat> B) {
     vector<GLfloat> C;
     
+    C = {
+        A[2]*B[3] - A[3]*B[2],
+        A[3]*B[1] - A[1]*B[3],
+        A[1]*B[2] - A[2]*B[1]
+      };
+
     return C;
 }
 
@@ -460,7 +468,7 @@ int main (int argc, char **argv) {
     // Remember to call "delete" on your dynmically allocated arrays
     // such that you don't suffer from memory leaks. e.g.
     // delete arr;
-    
+
     return 0;
 }
 
