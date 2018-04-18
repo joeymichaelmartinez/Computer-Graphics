@@ -225,18 +225,12 @@ vector<GLfloat> build_cube() {
  *                                                *
  *************************************************/
 
-// Generates the normals to each surface (plane)
-vector<GLfloat> generate_normals(vector<GLfloat> points) {
-    vector<GLfloat> normals;
-    
-
-    for(int j = 0; j < points.size(); j+=3) {
-        for(int j = 0; j < points.size() - 3; j+=3) {
-            q[j] = points[j] - points[j + 3]
-        }
-    }
-    
-    return normals;
+vector<GLfloat> join_vectors (vector<GLfloat> A, vector<GLfloat> B) {
+    vector<GLfloat> AB;
+    // AB.reserve( A.size() + B.size() ); // preallocate memory
+    AB.insert( AB.end(), A.begin(), A.end() );
+    AB.insert( AB.end(), B.begin(), B.end() );
+    return AB;
 }
 
 // Performs the cross product between two vectors
@@ -252,6 +246,39 @@ vector<GLfloat> cross_product(vector<GLfloat> A, vector<GLfloat> B) {
     return C;
 }
 
+// void generate_vector(vector<GLfloat> points, vector<GLfloat> &vector, int starting_position) {
+//     for(int j = 0; j < 3; j++)  {
+//         vector.push_back(points[i + starting_position + j] - points[j]);
+//     }
+// }
+
+// Generates the normals to each surface (plane)
+vector<GLfloat> generate_normals(vector<GLfloat> points) {
+    vector<GLfloat> normals;
+    
+    int three_components_of_vertex = 3;
+    int points_in_plane = 4;
+    vector<GLfloat> vector_1;
+    vector<GLfloat> vector_2;
+
+    for(int i = 0; i < points.size(); i = i + three_components_of_vertex * points_in_plane) {
+
+        // generate_vector(points, vector_1, 3);
+        // generate_vector(points, vector_2, 9);
+        // *** Make a helper function possibly that makes vectors
+        for(int j = 0; j < 3; j++)  {
+            vector_1.push_back(points[i + 3 + j] - points[j]);
+        }
+
+        for(int j = 0; j < 3; j++)  {
+            vector_2.push_back(points[i + 9 + j] - points[j]);
+        }
+
+        normals = join_vectors(normals, cross_product(normals_cross_1, normals_cross_2));
+    }
+    
+    return normals;
+}
 
 /**************************************************
  *         Shading via Lighting and Color         *
