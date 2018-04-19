@@ -253,6 +253,7 @@ vector<GLfloat> cross_product(vector<GLfloat> A, vector<GLfloat> B) {
 // }
 
 // Generates the normals to each surface (plane)
+// *** May need to handle turning this into a unit normal vector by div by magnitude
 vector<GLfloat> generate_normals(vector<GLfloat> points) {
     vector<GLfloat> normals;
     
@@ -274,7 +275,7 @@ vector<GLfloat> generate_normals(vector<GLfloat> points) {
             vector_2.push_back(points[i + 9 + j] - points[j]);
         }
 
-        normals = join_vectors(normals, cross_product(normals_cross_1, normals_cross_2));
+        normals = join_vectors(normals, cross_product(vector_1, vector_2));
     }
     
     return normals;
@@ -315,12 +316,58 @@ vector<GLfloat> init_base_color(GLfloat r0, GLfloat g0, GLfloat b0, GLfloat r1, 
     return base_color;
 }
 
+float find_magnitude(vector<GLfloat> A) {
+    return sqrt((A[0] * A[0]) + (A[1] * A[1]) + (A[2] * A[2]));
+}
+
+    vector<GLfloat> generate_h(vector<GLfloat> &light_source, vector<GLfloat> &camera) {
+    int light_source_magnitude = find_magnitude(light_source);
+    int camera_magnitude = find_magnitude(camera);
+
+    int total_magnitude = camera_magnitude + light_source_magnitude;
+
+    vector<GLfloat> h = {
+                        (light_source[0] + camera[0])/total_magnitude, 
+                        (light_source[1] + camera[1])/total_magnitude, 
+                        (light_source[2] + camera[2])/total_magnitude
+                    };
+}
+
+// Performs the dot product between two vectors
+GLfloat dot_product(vector<GLfloat> A, vector<GLfloat> B) {
+     
+    return (A[0] * B[0] + A[1] * B[1] + A[2] * B[2]);
+}
+
 // Generates the colors of a set of surfaces based on the light source,
 // surface normals, and base color of the surface
 ObjectModel apply_shading(ObjectModel object_model, vector<GLfloat> light_source, vector<GLfloat> camera) {
+    GLfloat amb, diff, spec = 0.1;
+    // GLfloat colors;
+
+    vector<GLfloat> model_points = object_model.get_points();
+
+    vector<GLfloat> base_colors = object_model.get_base_colors();
+
+    vector<GLfloat> h = generate_h(light_source, camera);
+
+    object_model.set_normals(generate_normals(model_points));
+    vector<GLfloat> normals = object_model.get_normals();
+
     vector<GLfloat> colors;
-    
-    object_model.set_colors(colors);
+
+    for(int i = 0; i < normals.size(); i+=3) {
+        vector<GLfloat> normal = {normals[i], normals[i + 1], normals[1 + 2] };
+        float light_dot_product = dot_product(normal, light_source);
+        float h_dot_product = dot_product(normals, h);
+        colors.push_back(base_colors[0] * (amb + diff*(light_dot_product)) + spec*base_colors[0] * h_dot_product);
+        colors.push_back(base_colors[1] * (amb + diff*(light_dot_product)) + spec*base_colors[1] * h_dot_product);
+        colors.push_back(base_colors[2] * (amb + diff*(light_dot_product)) + spec*base_colors[2] * h_dot_product);
+    }
+
+    // base_colors*(amb + diff(normals[0]))
+
+    // object_model.set_colors(colors);
     return object_model;
 }
 
@@ -331,13 +378,7 @@ ObjectModel apply_shading(ObjectModel object_model, vector<GLfloat> light_source
     vector<GLfloat> colors;
     
     object_model.set_colors(colors);
-    return object_model;
-}
-
-// Performs the dot product between two vectors
-GLfloat dot_product(vector<GLfloat> A, vector<GLfloat> B) {
-    
-    return 0.0;
+    return object_model;    
 }
 
 /**************************************************
