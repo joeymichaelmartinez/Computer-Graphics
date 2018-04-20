@@ -1,15 +1,14 @@
 /***
  Assignment-2: Geometric Modeling of a Scene
 
- Name: Wong, Alex (Please write your name in Last Name, First Name format)
-
- Collaborators: Doe, John; Doe, Jane
- ** Note: although the assignment should be completed individually
- you may speak with classmates on high level algorithmic concepts. Please
- list their names in this section
-
- Project Summary: A short paragraph (3-4 sentences) describing the work you
- did for the project.
+ Name: Martinez, Joseph 
+ Project Summary: I first found how to turn turn a vector into 
+ having homogenous coordinates or cartesian coordinates. I then 
+ designed the different matrices that were necessary for transformations. 
+ Once I had these I tweaked the initial cube with matrix multiplication
+ until I figured out how to get matrix multiplication just right. Once
+ this was done, I then assembled the initial cube, and manipulated it 
+ to form all the various objects that I needed.
 ***/
 
 
@@ -38,6 +37,8 @@ using namespace std;
  *                                                *
  *************************************************/
 
+int number_of_sides;
+
 // Initializes a square plane of unit lengths
 vector<GLfloat> init_plane() {
     vector<GLfloat> vertices = {
@@ -60,20 +61,16 @@ GLfloat* vector2array(vector<GLfloat> vec) {
 
 // Converts Cartesian coordinates to homogeneous coordinates
 vector<GLfloat> to_homogenous_coord(vector<GLfloat> cartesian_coords) {
-    // vector<GLfloat> result;
 
     for (int i = cartesian_coords.size(); i > 0; i=i-3) {
         cartesian_coords.insert(cartesian_coords.begin() + i, +1.0);
     }
 
-    // cout << cartesian_coords << "\n"
     return cartesian_coords;
-    // return result;
 }
 
 // Converts Cartesian coordinates to homogeneous coordinates
 vector<GLfloat> to_cartesian_coord(vector<GLfloat> homogenous_coords) {
-    // vector<GLfloat> result;
     
     for (int i = homogenous_coords.size() - 1; i > 0; i=i-4) {
         homogenous_coords.erase(homogenous_coords.begin() + i);
@@ -112,8 +109,8 @@ vector<GLfloat> rotation_matrix_x (float theta) {
     double rad = (double)M_PI*theta/180.0f;
     vector<GLfloat> rotate_mat_x= {
         +1.0f, +0.0f, +0.0f, +0.0f,
-        +0.0f, cos(rad), -sin(rad), +0.0f,
-        +0.0f, sin(rad), cos(rad), +0.0f,
+        +0.0f, (float)::cos(rad), (float)-::sin(rad), +0.0f,
+        +0.0f, (float)::sin(rad), (float)::cos(rad), +0.0f,
         +0.0f, +0.0f, +0.0f, 1
     };
 
@@ -126,9 +123,9 @@ vector<GLfloat> rotation_matrix_y (float theta) {
 
     double rad = (double)M_PI*theta/180.0f;
     vector<GLfloat> rotate_mat_y= {
-        cos(rad), +0.0f, sin(rad), +0.0f,
+        (float)::cos(rad), +0.0f, (float)::sin(rad), +0.0f,
         +0.0f, +1.0f, +0.0f, +0.0f,
-        -sin(rad), +0.0f, cos(rad), +0.0f,
+        (float)-::sin(rad), +0.0f, (float)::cos(rad), +0.0f,
         +0.0f, +0.0f, +0.0f, +1.0f
     };
     
@@ -141,8 +138,8 @@ vector<GLfloat> rotation_matrix_z (float theta) {
 
     double rad = (double)M_PI*theta/180.0f;
     vector<GLfloat> rotate_mat_z= {
-        cos(rad), -sin(rad), +0.0f, +0.0f,
-        sin(rad), cos(rad), +0.0f, +0.0f,
+        (float)::cos(rad), (float)-::sin(rad), +0.0f, +0.0f,
+        (float)::sin(rad), (float)::cos(rad), +0.0f, +0.0f,
         +0.0f, +0.0f, +1.0f, +0.0f,
         +0.0f, +0.0f, +0.0f, +1.0f
     };
@@ -160,10 +157,7 @@ vector<GLfloat> mat_mult(vector<GLfloat> A, vector<GLfloat> B) {
                 multiplied_answer = 0;
                 int l = 0;
                 for(int j = k; j < k + 4; j++) {
-                    // cout << "A " << A[i+l] << " \n" ;
-                    // cout << "B " << B[j] << " \n";
                     multiplied_answer += A[i+l] * B[j];
-                    // cout << "multiplied_answer " << multiplied_answer << " \n";
                     l++;
                 }
                     result.push_back(multiplied_answer);  
@@ -191,9 +185,6 @@ vector<GLfloat> build_cube() {
     sides_vector.push_back(mat_mult(translation_matrix(0.0f, 0.5f, 0.0f), mat_mult(rotation_matrix_x(-90), initial_plane)));
 
     sides_vector.push_back(mat_mult(translation_matrix(0.0f, -0.5f, 0.0f), mat_mult(rotation_matrix_x(90), initial_plane)));
-
-
-
     
     for(int i = 0; i < sides_vector.size(); i++){
         for(int j = 0; j < sides_vector[i].size(); j++) {
@@ -232,10 +223,8 @@ void init_camera() {
     // Camera parameters
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    // Define a 50 degree field of view, 1:1 aspect ratio, near and far planes at 3 and 7
     gluPerspective(50.0, 1.0, 2.0, 50.0);
-    // Position camera at (2, 3, 5), attention at (0, 0, 0), up at (0, 1, 0)
-    gluLookAt(15.0, 7.0, 15.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+    gluLookAt(20.0, 15.0, -15.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 }
 
 // Construct the scene using objects built from cubes/prisms
@@ -243,21 +232,81 @@ GLfloat* init_scene() {
 
     vector<GLfloat> unit_cube = build_cube();
 
-    vector<GLfloat> leg_1 = mat_mult(translation_matrix(0.0f, 0.0f, 0.0f), mat_mult(scaling_matrix(1.0f, 7.5f, 1.0f), unit_cube));
-    vector<GLfloat> leg_2 = mat_mult(translation_matrix(0.0f, 0.0f, 0.0f), mat_mult(scaling_matrix(1.0f, 7.5f, 1.0f), unit_cube));
+    vector<vector<GLfloat>> collection_of_chair_pieces;
+    vector<vector<GLfloat>> collection_of_table_pieces;
+    vector<GLfloat> objects_vector;
+    vector<GLfloat> chair_1;
+    vector<GLfloat> chair_2;
+    vector<GLfloat> table;
 
+    vector<GLfloat> chair_leg_1 = mat_mult(translation_matrix(-2.25f, 0.0f, 2.75f), mat_mult(scaling_matrix(0.5, 5.0f, 0.5f), unit_cube));
+    vector<GLfloat> chair_leg_2 = mat_mult(translation_matrix(2.25f, 0.0f, 2.75f), mat_mult(scaling_matrix(0.5f, 5.0f, 0.5f), unit_cube));
+    vector<GLfloat> chair_leg_3 = mat_mult(translation_matrix(-2.25f, 0.0f, -2.75f), mat_mult(scaling_matrix(0.5, 5.0f, 0.5f), unit_cube));
+    vector<GLfloat> chair_leg_4 = mat_mult(translation_matrix(2.25f, 0.0f, -2.75f), mat_mult(scaling_matrix(0.5f, 5.0f, 0.5f), unit_cube));
+    vector<GLfloat> chair_seat = mat_mult(translation_matrix(0.0f, 2.5f, 0.0f), mat_mult(scaling_matrix(5.0f, 1.0f, 6.0f), unit_cube));
+    vector<GLfloat> chair_back_1 = mat_mult(translation_matrix(-2.25f, 6.0f, -2.75f), mat_mult(scaling_matrix(0.5f, 6.0f, 0.5f), unit_cube));
+    vector<GLfloat> chair_back_2 = mat_mult(translation_matrix(-2.25f, 6.0f, -1.375f), mat_mult(scaling_matrix(0.5f, 6.0f, 0.5f), unit_cube));
+    vector<GLfloat> chair_back_3 = mat_mult(translation_matrix(-2.25f, 6.0f, 0.0f), mat_mult(scaling_matrix(0.5f, 6.0f, 0.5f), unit_cube));
+    vector<GLfloat> chair_back_4 = mat_mult(translation_matrix(-2.25f, 6.0f, 1.375f), mat_mult(scaling_matrix(0.5f, 6.0f, 0.5f), unit_cube));
+    vector<GLfloat> chair_back_5 = mat_mult(translation_matrix(-2.25f, 6.0f, 2.75f), mat_mult(scaling_matrix(0.5f, 6.0f, 0.5f), unit_cube));
+    vector<GLfloat> chair_back_6 = mat_mult(translation_matrix(-2.25f, 9.0f, 0.0f), mat_mult(scaling_matrix(0.5f, 1.0f, 6.0f), unit_cube));
 
+    collection_of_chair_pieces.push_back(chair_leg_1);
+    collection_of_chair_pieces.push_back(chair_leg_2);
+    collection_of_chair_pieces.push_back(chair_leg_3);
+    collection_of_chair_pieces.push_back(chair_leg_4);
+    collection_of_chair_pieces.push_back(chair_seat);
+    collection_of_chair_pieces.push_back(chair_back_1);
+    collection_of_chair_pieces.push_back(chair_back_2);
+    collection_of_chair_pieces.push_back(chair_back_3);
+    collection_of_chair_pieces.push_back(chair_back_4);
+    collection_of_chair_pieces.push_back(chair_back_5);
+    collection_of_chair_pieces.push_back(chair_back_6);
 
-    leg_1 = to_cartesian_coord(leg_1);
+    for(int i = 0; i < collection_of_chair_pieces.size(); i++){
+        for(int j = 0; j < collection_of_chair_pieces[i].size(); j++) {
+            chair_1.push_back(collection_of_chair_pieces[i][j]);
+        }
+    } 
 
-    GLfloat* objects = vector2array(leg_1);
+    vector<GLfloat> chair_1_transformed = mat_mult(translation_matrix(0.0f, 0.0f, -8.0f), mat_mult(rotation_matrix_y(-20), chair_1));
+    vector<GLfloat> chair_2_transformed = mat_mult(translation_matrix(0.0f, 0.0f, 6.0f), mat_mult(rotation_matrix_y(70), chair_1));
+
+    for(int i = 0; i < chair_1_transformed.size(); i++){
+        objects_vector.push_back(chair_1_transformed[i]);
+    } 
+
+    for(int i = 0; i < chair_2_transformed.size(); i++){
+        objects_vector.push_back(chair_2_transformed[i]);
+    }
+
+    vector<GLfloat> table_leg_1 = mat_mult(translation_matrix(-3.0f, 2.0f, 4.25f), mat_mult(scaling_matrix(0.5, 9.0f, 0.5f), unit_cube));
+    vector<GLfloat> table_leg_2 = mat_mult(translation_matrix(3.0f, 2.0f, 4.25f), mat_mult(scaling_matrix(0.5f, 9.0f, 0.5f), unit_cube));
+    vector<GLfloat> table_leg_3 = mat_mult(translation_matrix(-3.0f, 2.0f, -4.25f), mat_mult(scaling_matrix(0.5, 9.0f, 0.5f), unit_cube));
+    vector<GLfloat> table_leg_4 = mat_mult(translation_matrix(3.0f, 2.0f, -4.25f), mat_mult(scaling_matrix(0.5f, 9.0f, 0.5f), unit_cube));
+    vector<GLfloat> table_top = mat_mult(translation_matrix(0.0f, 7.0f, 0.0f), mat_mult(scaling_matrix(8.0f, 0.5f, 10.0f), unit_cube));
+
+    collection_of_table_pieces.push_back(table_leg_1);
+    collection_of_table_pieces.push_back(table_leg_2);
+    collection_of_table_pieces.push_back(table_leg_3);
+    collection_of_table_pieces.push_back(table_leg_4);
+    collection_of_table_pieces.push_back(table_top);
+
+    for(int i = 0; i < collection_of_table_pieces.size(); i++){
+        for(int j = 0; j < collection_of_table_pieces[i].size(); j++) {
+            objects_vector.push_back(collection_of_table_pieces[i][j]);
+        }
+    }
+
+    objects_vector = to_cartesian_coord(objects_vector);
+
+    number_of_sides = collection_of_chair_pieces.size()*2 + collection_of_table_pieces.size();
+    cout << number_of_sides << "\n";
+
+    GLfloat* objects = vector2array(objects_vector);
     return objects;
 }
 
-// Construct the color mapping of the scene
-// GLfloat* init_color() {
-//     return nullptr;
-// }
 float theta = 0.0;
 
 void display_func() {
@@ -265,29 +314,17 @@ void display_func() {
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    
 
-    // glRotatef(theta, 0.0, 1.0, 0.0);
-    // glRotatef(theta, 1.0, 0.0, 0.0);
-    // cout << "hello \n";
-
-    //pass the color pointer
-    // glColorPointer(3,     
-    //                GL_FLOAT, 
-    //                0,       
-    //                colors);
-    
-
-    GLfloat* cube = init_scene();
-    
+    GLfloat* objects = init_scene();
     glVertexPointer(3,          
                     GL_FLOAT,  
                     0,         
-                    cube);
-    // Draw quad point planes: each 4 vertices
-    glDrawArrays(GL_QUADS, 0, 4*6);
+                    objects);
+
+    glDrawArrays(GL_QUADS, 0, number_of_sides*4*6);
     
-    glFlush();          //Finish rendering
+    delete objects;
+    glFlush();         
     glutSwapBuffers();
     
 }
@@ -299,40 +336,18 @@ void idle_func() {
 
 int main (int argc, char **argv) {
     vector<GLfloat> homogenous_coords = to_homogenous_coord(init_plane());
-
-    // vector<GLfloat> cartesian_coords = to_cartesian_coord(homogenous_coords);
-
-    // vector<GLfloat> test = {+1.0,+1.0,+1.0,+1.0, +2.0, +2.0, +2.0, +2.0};
-
-    // vector<GLfloat> answer = mat_mult(homogenous_coords, test);    
-    
-    // for (int i = 0; i < answer.size(); i++) {
-    //     cout << answer[i] << " ";
-    //     if(i % 3 == 2) {
-    //         cout << " \n";
-    //     }
-    // }
-    // Initialize GLUT
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
     glutInitWindowSize(800, 600);
-    // Create a window with rendering context and everything else we need
     glutCreateWindow("Assignment 2");
     
     setup();
     init_camera();
     
-    // Set up our display function
     glutDisplayFunc(display_func);
 
     glutIdleFunc(idle_func);
-    // Render our world
     glutMainLoop();
-
-
-    // Remember to call "delete" on your dynmically allocated arrays
-    // such that you don't suffer from memory leaks. e.g.
-    // delete arr;
     
     return 0;
 }

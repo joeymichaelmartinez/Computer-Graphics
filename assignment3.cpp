@@ -26,10 +26,10 @@
 
 #include <math.h>
 #include <vector>
+#include <iostream>
 using namespace std;
 
 int number_of_sides;
-
 /**************************************************
  *              Object Model Class                *
  *                                                *
@@ -54,6 +54,10 @@ public:
     void set_base_colors(vector<GLfloat> base_colors) { _base_colors = base_colors; };
     void set_colors(vector<GLfloat> colors) { _colors = colors; };
 };
+
+ObjectModel chair_1;
+ObjectModel chair_2;
+ObjectModel table;
 
 /**************************************************
  *  Rectangular Prisms via Hierarchical Modeling  *
@@ -320,7 +324,7 @@ float find_magnitude(vector<GLfloat> A) {
     return sqrt((A[0] * A[0]) + (A[1] * A[1]) + (A[2] * A[2]));
 }
 
-    vector<GLfloat> generate_h(vector<GLfloat> &light_source, vector<GLfloat> &camera) {
+vector<GLfloat> generate_h(vector<GLfloat> &light_source, vector<GLfloat> &camera) {
     int light_source_magnitude = find_magnitude(light_source);
     int camera_magnitude = find_magnitude(camera);
 
@@ -414,16 +418,11 @@ void init_camera() {
     gluLookAt(20.0, 15.0, -15.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 }
 
-// Construct the scene using objects built from cubes/prisms
-GLfloat* init_scene() {
-    vector<GLfloat> unit_cube = build_cube();
+void make_chair(ObjectModel chair) {
 
-    vector<vector<GLfloat>> collection_of_chair_pieces;
-    vector<vector<GLfloat>> collection_of_table_pieces;
-    vector<GLfloat> objects_vector;
-    vector<GLfloat> chair_1;
-    vector<GLfloat> chair_2;
-    vector<GLfloat> table;
+    vector<GLfloat> unit_cube = build_cube();
+    // ObjectModel chair;
+    vector<GLfloat> collection_of_chair_pieces;
 
     vector<GLfloat> chair_leg_1 = mat_mult(translation_matrix(-2.25f, 0.0f, 2.75f), mat_mult(scaling_matrix(0.5, 5.0f, 0.5f), unit_cube));
     vector<GLfloat> chair_leg_2 = mat_mult(translation_matrix(2.25f, 0.0f, 2.75f), mat_mult(scaling_matrix(0.5f, 5.0f, 0.5f), unit_cube));
@@ -437,34 +436,27 @@ GLfloat* init_scene() {
     vector<GLfloat> chair_back_5 = mat_mult(translation_matrix(-2.25f, 6.0f, 2.75f), mat_mult(scaling_matrix(0.5f, 6.0f, 0.5f), unit_cube));
     vector<GLfloat> chair_back_6 = mat_mult(translation_matrix(-2.25f, 9.0f, 0.0f), mat_mult(scaling_matrix(0.5f, 1.0f, 6.0f), unit_cube));
 
-    collection_of_chair_pieces.push_back(chair_leg_1);
-    collection_of_chair_pieces.push_back(chair_leg_2);
-    collection_of_chair_pieces.push_back(chair_leg_3);
-    collection_of_chair_pieces.push_back(chair_leg_4);
-    collection_of_chair_pieces.push_back(chair_seat);
-    collection_of_chair_pieces.push_back(chair_back_1);
-    collection_of_chair_pieces.push_back(chair_back_2);
-    collection_of_chair_pieces.push_back(chair_back_3);
-    collection_of_chair_pieces.push_back(chair_back_4);
-    collection_of_chair_pieces.push_back(chair_back_5);
-    collection_of_chair_pieces.push_back(chair_back_6);
+    collection_of_chair_pieces = join_vectors(collection_of_chair_pieces, chair_leg_1);
+    collection_of_chair_pieces = join_vectors(collection_of_chair_pieces, chair_leg_2);
+    collection_of_chair_pieces = join_vectors(collection_of_chair_pieces, chair_leg_3);
+    collection_of_chair_pieces = join_vectors(collection_of_chair_pieces, chair_leg_4);
+    collection_of_chair_pieces = join_vectors(collection_of_chair_pieces, chair_seat);
+    collection_of_chair_pieces = join_vectors(collection_of_chair_pieces, chair_back_1);
+    collection_of_chair_pieces = join_vectors(collection_of_chair_pieces, chair_back_2);
+    collection_of_chair_pieces = join_vectors(collection_of_chair_pieces, chair_back_3);
+    collection_of_chair_pieces = join_vectors(collection_of_chair_pieces, chair_back_4);
+    collection_of_chair_pieces = join_vectors(collection_of_chair_pieces, chair_back_5);
+    collection_of_chair_pieces = join_vectors(collection_of_chair_pieces, chair_back_6);
 
-    for(int i = 0; i < collection_of_chair_pieces.size(); i++){
-        for(int j = 0; j < collection_of_chair_pieces[i].size(); j++) {
-            chair_1.push_back(collection_of_chair_pieces[i][j]);
-        }
-    } 
+    chair.set_points(collection_of_chair_pieces);
+    // return chair;
+}
 
-    vector<GLfloat> chair_1_transformed = mat_mult(translation_matrix(0.0f, 0.0f, -8.0f), mat_mult(rotation_matrix_y(-20), chair_1));
-    vector<GLfloat> chair_2_transformed = mat_mult(translation_matrix(0.0f, 0.0f, 6.0f), mat_mult(rotation_matrix_y(70), chair_1));
+void make_table(ObjectModel table) {
 
-    for(int i = 0; i < chair_1_transformed.size(); i++){
-        objects_vector.push_back(chair_1_transformed[i]);
-    } 
-
-    for(int i = 0; i < chair_2_transformed.size(); i++){
-        objects_vector.push_back(chair_2_transformed[i]);
-    }
+    vector<GLfloat> unit_cube = build_cube();
+    // ObjectModel table;
+    vector<GLfloat> collection_of_table_pieces;
 
     vector<GLfloat> table_leg_1 = mat_mult(translation_matrix(-3.0f, 2.0f, 4.25f), mat_mult(scaling_matrix(0.5, 9.0f, 0.5f), unit_cube));
     vector<GLfloat> table_leg_2 = mat_mult(translation_matrix(3.0f, 2.0f, 4.25f), mat_mult(scaling_matrix(0.5f, 9.0f, 0.5f), unit_cube));
@@ -472,48 +464,95 @@ GLfloat* init_scene() {
     vector<GLfloat> table_leg_4 = mat_mult(translation_matrix(3.0f, 2.0f, -4.25f), mat_mult(scaling_matrix(0.5f, 9.0f, 0.5f), unit_cube));
     vector<GLfloat> table_top = mat_mult(translation_matrix(0.0f, 7.0f, 0.0f), mat_mult(scaling_matrix(8.0f, 0.5f, 10.0f), unit_cube));
 
-    collection_of_table_pieces.push_back(table_leg_1);
-    collection_of_table_pieces.push_back(table_leg_2);
-    collection_of_table_pieces.push_back(table_leg_3);
-    collection_of_table_pieces.push_back(table_leg_4);
-    collection_of_table_pieces.push_back(table_top);
+    collection_of_table_pieces = join_vectors(collection_of_table_pieces, table_leg_1);
+    collection_of_table_pieces = join_vectors(collection_of_table_pieces, table_leg_2);
+    collection_of_table_pieces = join_vectors(collection_of_table_pieces, table_leg_3);
+    collection_of_table_pieces = join_vectors(collection_of_table_pieces, table_leg_4);
+    collection_of_table_pieces = join_vectors(collection_of_table_pieces, table_top);
 
-    for(int i = 0; i < collection_of_table_pieces.size(); i++){
-        for(int j = 0; j < collection_of_table_pieces[i].size(); j++) {
-            objects_vector.push_back(collection_of_table_pieces[i][j]);
-        }
-    }
+    table.set_points(collection_of_table_pieces);
+    // return table;
+}
+ObjectModel unit_cube;
+// Construct the scene using objects built from cubes/prisms
+GLfloat* init_scene() {
+    unit_cube.set_points(build_cube());
+    vector<GLfloat> cartesian_cube = to_cartesian_coord(unit_cube.get_points()); 
+    GLfloat* array_cube = vector2array(cartesian_cube);
+    number_of_sides = 6;
+    return array_cube;
 
-    objects_vector = to_cartesian_coord(objects_vector);
+    // vector<vector<GLfloat>> collection_of_chair_pieces;
+    // vector<vector<GLfloat>> collection_of_table_pieces;
+    // vector<GLfloat> objects_vector;
+    // ObjectModel chair_1 = make_chair();
+    // ObjectModel chair_2 = make_chair();
+    // ObjectModel table = make_table();
 
-    number_of_sides = collection_of_chair_pieces.size()*2 + collection_of_table_pieces.size();
+    // chair_1.set_points(mat_mult(translation_matrix(0.0f, 0.0f, -8.0f), mat_mult(rotation_matrix_y(-20), chair_1.get_points())));
+    // chair_2.set_points(mat_mult(translation_matrix(0.0f, 0.0f, 6.0f), mat_mult(rotation_matrix_y(70), chair_2.get_points())));
+    // // vector<GLfloat> chair_2_transformed = mat_mult(translation_matrix(0.0f, 0.0f, 6.0f), mat_mult(rotation_matrix_y(70), chair_1));
 
-    GLfloat* objects = vector2array(objects_vector);
-    return objects;
+    // for(int i = 0; i < chair_1.get_points().size(); i++){
+    //     objects_vector.push_back(chair_1.get_points()[i]);
+    // } 
+
+    // for(int i = 0; i < chair_2.get_points().size(); i++){
+    //     objects_vector.push_back(chair_2.get_points()[i]);
+    // }
+
+    // for(int i = 0; i < table.get_points().size(); i++){
+    //     objects_vector.push_back(table.get_points()[i]);
+    // }
+
+    // objects_vector = to_cartesian_coord(objects_vector);
+
+    // number_of_sides = (chair_1.get_points().size()*2 + table.get_points().size())/96;
+    // // cout << number_of_sides << "\n";
+
+    // GLfloat* objects = vector2array(objects_vector);
+    // return objects;
 }
 
 // Construct the color mapping of the scene
 GLfloat* init_color() {
-    return nullptr;
+    unit_cube.set_base_colors(init_base_color(102, 51, 0));
+    GLfloat* array_of_colors = vector2array(unit_cube.get_base_colors());
+    return array_of_colors;
+    
 }
 
+float theta = 0.0;
+
 void display_func() {
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
     GLfloat* objects = init_scene();
+    GLfloat* colors = init_color();
     glVertexPointer(3,          
                     GL_FLOAT,  
                     0,         
                     objects);
+
+    glColorPointer(3,
+                   GL_FLOAT,
+                   0,
+                   colors);
 
     glDrawArrays(GL_QUADS, 0, number_of_sides*4*6);
     
     delete objects;
     glFlush();         
     glutSwapBuffers();
+}
+
+void idle_func() {
+    theta = theta+0.3;
+    display_func();
 }
 
 
@@ -531,6 +570,8 @@ int main (int argc, char **argv) {
     // Set up our display function
     glutDisplayFunc(display_func);
     // Render our world
+    
+    glutIdleFunc(idle_func);
     glutMainLoop();
     
     // Remember to call "delete" on your dynmically allocated arrays
