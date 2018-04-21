@@ -30,6 +30,8 @@
 using namespace std;
 
 int number_of_sides;
+GLfloat* objects;
+GLfloat* colors;
 /**************************************************
  *              Object Model Class                *
  *                                                *
@@ -231,7 +233,6 @@ vector<GLfloat> build_cube() {
 
 vector<GLfloat> join_vectors (vector<GLfloat> A, vector<GLfloat> B) {
     vector<GLfloat> AB;
-    // AB.reserve( A.size() + B.size() ); // preallocate memory
     AB.insert( AB.end(), A.begin(), A.end() );
     AB.insert( AB.end(), B.begin(), B.end() );
     return AB;
@@ -256,6 +257,27 @@ vector<GLfloat> cross_product(vector<GLfloat> A, vector<GLfloat> B) {
 //     }
 // }
 
+GLfloat find_magnitude(vector<GLfloat> A) { 
+    return sqrt((A[0] * A[0]) + (A[1] * A[1]) + (A[2] * A[2]));
+}
+
+vector<GLfloat> make_unit(vector<GLfloat> A) {
+    GLfloat magnitude_of_A = find_magnitude(A);
+    A[0] = (A[0])/(magnitude_of_A);
+    A[1] = (A[1])/(magnitude_of_A);
+    A[2] = (A[2])/(magnitude_of_A);
+    return A;
+}
+
+vector<GLfloat> vector_subtraction(vector<GLfloat> A, vector<GLfloat> B) {
+    vector<GLfloat> C = {
+        A[0] - B[0],
+        A[1] - B[1],
+        A[2] - B[2]
+    };
+    return C;
+}
+
 // Generates the normals to each surface (plane)
 // *** May need to handle turning this into a unit normal vector by div by magnitude
 vector<GLfloat> generate_normals(vector<GLfloat> points) {
@@ -267,21 +289,22 @@ vector<GLfloat> generate_normals(vector<GLfloat> points) {
     vector<GLfloat> vector_2;
 
     for(int i = 0; i < points.size(); i = i + three_components_of_vertex * points_in_plane) {
-
         // generate_vector(points, vector_1, 3);
         // generate_vector(points, vector_2, 9);
         // *** Make a helper function possibly that makes vectors
-        for(int j = 0; j < 3; j++)  {
-            vector_1.push_back(points[i + 3 + j] - points[j]);
-        }
+        vector<GLfloat> q_0 = { points[i], points[i + 1], points[i + 2]};
+        vector<GLfloat> q_1 = { points[i + 3], points[i + 4], points[i + 5]};
+        vector<GLfloat> q_3 = { points[i + 9], points[i + 10], points[i + 11]};
+        vector_1 = join_vectors(vector_1, vector_subtraction(q_1, q_0));
+        vector_2 = join_vectors(vector_2, vector_subtraction(q_3, q_0));
 
-        for(int j = 0; j < 3; j++)  {
-            vector_2.push_back(points[i + 9 + j] - points[j]);
-        }
+        normals = join_vectors(normals, make_unit(cross_product(vector_1, vector_2)));
+        normals = join_vectors(normals, make_unit(cross_product(vector_1, vector_2)));
+        normals = join_vectors(normals, make_unit(cross_product(vector_1, vector_2)));
+        normals = join_vectors(normals, make_unit(cross_product(vector_1, vector_2)));
 
-        normals = join_vectors(normals, cross_product(vector_1, vector_2));
+        // normals.push_back(normals)
     }
-    
     return normals;
 }
 
@@ -320,40 +343,37 @@ vector<GLfloat> init_base_color(GLfloat r0, GLfloat g0, GLfloat b0, GLfloat r1, 
     return base_color;
 }
 
-float find_magnitude(vector<GLfloat> A) {
-    return sqrt((A[0] * A[0]) + (A[1] * A[1]) + (A[2] * A[2]));
-}
 
-vector<GLfloat> generate_h(vector<GLfloat> &light_source, vector<GLfloat> &camera) {
-    int light_source_magnitude = find_magnitude(light_source);
-    int camera_magnitude = find_magnitude(camera);
+vector<GLfloat> generate_h(vector<GLfloat> &light_source, vector<GLfloat> &camera, vector<GLfloat> points) {
+    GLfloat light_source_magnitude = find_magnitude(light_source);
+    vector<GLfloat> v = vector_subtraction(points, camera);
+    GLfloat v_magnitude = find_magnitude(v);
 
-    int total_magnitude = camera_magnitude + light_source_magnitude;
-
+    GLfloat total_magnitude = v_magnitude + light_source_magnitude;
     vector<GLfloat> h = {
-                        (light_source[0] + camera[0])/total_magnitude, 
-                        (light_source[1] + camera[1])/total_magnitude, 
-                        (light_source[2] + camera[2])/total_magnitude
+                        (light_source[0] + v[0])/total_magnitude, 
+                        (light_source[1] + v[1])/total_magnitude, 
+                        (light_source[2] + v[2])/total_magnitude
                     };
+    return h; 
+        
 }
 
 // Performs the dot product between two vectors
 GLfloat dot_product(vector<GLfloat> A, vector<GLfloat> B) {
-     
-    return (A[0] * B[0] + A[1] * B[1] + A[2] * B[2]);
+    GLfloat dot_product = ((A[0] * B[0]) + (A[1] * B[1]) + (A[2] * B[2]));
+    return dot_product;
 }
 
 // Generates the colors of a set of surfaces based on the light source,
 // surface normals, and base color of the surface
 ObjectModel apply_shading(ObjectModel object_model, vector<GLfloat> light_source, vector<GLfloat> camera) {
-    GLfloat amb, diff, spec = 0.1;
+    GLfloat amb, diff, spec = 1;
     // GLfloat colors;
 
     vector<GLfloat> model_points = object_model.get_points();
 
     vector<GLfloat> base_colors = object_model.get_base_colors();
-
-    vector<GLfloat> h = generate_h(light_source, camera);
 
     object_model.set_normals(generate_normals(model_points));
     vector<GLfloat> normals = object_model.get_normals();
@@ -361,14 +381,18 @@ ObjectModel apply_shading(ObjectModel object_model, vector<GLfloat> light_source
     vector<GLfloat> colors;
 
     for(int i = 0; i < normals.size(); i+=3) {
-        vector<GLfloat> normal = {normals[i], normals[i + 1], normals[1 + 2] };
-        float light_dot_product = dot_product(normal, light_source);
-        float h_dot_product = dot_product(normals, h);
-        colors.push_back(base_colors[0] * (amb + diff*(light_dot_product)) + spec*base_colors[0] * h_dot_product);
-        colors.push_back(base_colors[1] * (amb + diff*(light_dot_product)) + spec*base_colors[1] * h_dot_product);
-        colors.push_back(base_colors[2] * (amb + diff*(light_dot_product)) + spec*base_colors[2] * h_dot_product);
+        vector<GLfloat> current_points = { model_points[i], model_points[i + 1], model_points[i + 2] };
+        vector<GLfloat> h = generate_h(light_source, camera, model_points);
+        vector<GLfloat> normal = {normals[i], normals[i + 1], normals[i + 2]};
+        GLfloat light_dot_product = dot_product(normal, light_source);
+        GLfloat h_dot_product = dot_product(normals, h);
+        colors.push_back(base_colors[i] * (amb + diff * (light_dot_product)) + spec * base_colors[i] * h_dot_product);
+        colors.push_back(base_colors[i + 1] * (amb + diff * (light_dot_product)) + spec * base_colors[i + 1] * h_dot_product);
+        colors.push_back(base_colors[i + 2] * (amb + diff * (light_dot_product)) + spec * base_colors[i + 2] * h_dot_product);
     }
 
+    object_model.set_colors(colors);
+    cout << object_model.get_colors()[1] << "\n";
     // base_colors*(amb + diff(normals[0]))
 
     // object_model.set_colors(colors);
@@ -415,10 +439,21 @@ void init_camera() {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluPerspective(50.0, 1.0, 2.0, 50.0);
-    gluLookAt(20.0, 15.0, -15.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+    gluLookAt(20.0, 15.0, -15.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0); // 2, 6, 5
 }
 
-void make_chair(ObjectModel chair) {
+vector<GLfloat> color_cube(vector<GLfloat> &colors) {
+    colors = join_vectors(colors, init_base_color(0.398, 0.199, 0));
+    colors = join_vectors(colors, init_base_color(0.398, 0.199, 0));
+    colors = join_vectors(colors, init_base_color(0.398, 0.199, 0));
+    colors = join_vectors(colors, init_base_color(0.398, 0.199, 0));
+    colors = join_vectors(colors, init_base_color(0.398, 0.199, 0));
+    colors = join_vectors(colors, init_base_color(0.398, 0.199, 0));
+    return colors;
+
+}
+
+ObjectModel make_chair(ObjectModel chair) {
 
     vector<GLfloat> unit_cube = build_cube();
     // ObjectModel chair;
@@ -449,10 +484,26 @@ void make_chair(ObjectModel chair) {
     collection_of_chair_pieces = join_vectors(collection_of_chair_pieces, chair_back_6);
 
     chair.set_points(collection_of_chair_pieces);
-    // return chair;
+
+    vector<GLfloat> colors;
+    color_cube(colors);
+    color_cube(colors);
+    color_cube(colors);
+    color_cube(colors);
+    color_cube(colors);
+    color_cube(colors);
+    color_cube(colors);
+    color_cube(colors);
+    color_cube(colors);
+    color_cube(colors);
+    color_cube(colors);
+    chair.set_base_colors(colors);
+
+    chair.set_normals(generate_normals(chair.get_points()));
+    return chair;
 }
 
-void make_table(ObjectModel table) {
+ObjectModel make_table(ObjectModel table) {
 
     vector<GLfloat> unit_cube = build_cube();
     // ObjectModel table;
@@ -470,54 +521,66 @@ void make_table(ObjectModel table) {
     collection_of_table_pieces = join_vectors(collection_of_table_pieces, table_leg_4);
     collection_of_table_pieces = join_vectors(collection_of_table_pieces, table_top);
 
+    vector<GLfloat> colors;
     table.set_points(collection_of_table_pieces);
+    color_cube(colors);
+    color_cube(colors);
+    color_cube(colors);
+    color_cube(colors);
+    color_cube(colors);
+    table.set_base_colors(colors);
+    table.set_normals(generate_normals(table.get_points()));
+    return table;
     // return table;
 }
 ObjectModel unit_cube;
 // Construct the scene using objects built from cubes/prisms
 GLfloat* init_scene() {
-    unit_cube.set_points(build_cube());
-    vector<GLfloat> cartesian_cube = to_cartesian_coord(unit_cube.get_points()); 
-    GLfloat* array_cube = vector2array(cartesian_cube);
-    number_of_sides = 6;
-    return array_cube;
+    // vector<GLfloat> cube = build_cube();
+    // unit_cube.set_points(build_cube());
+    // vector<GLfloat> cartesian_cube = to_cartesian_coord(cube); 
+    // unit_cube.set_points(cartesian_cube);
+    // GLfloat* array_cube = vector2array(cartesian_cube);
+    // number_of_sides = 6;
+    // return array_cube;
 
-    // vector<vector<GLfloat>> collection_of_chair_pieces;
-    // vector<vector<GLfloat>> collection_of_table_pieces;
-    // vector<GLfloat> objects_vector;
-    // ObjectModel chair_1 = make_chair();
-    // ObjectModel chair_2 = make_chair();
-    // ObjectModel table = make_table();
+    vector<vector<GLfloat>> collection_of_chair_pieces;
+    vector<vector<GLfloat>> collection_of_table_pieces;
+    vector<GLfloat> objects_vector;
+    // chair_1 = make_chair(chair_1);
+    // chair_2 = make_chair(chair_2);
+    table = make_table(table);
 
-    // chair_1.set_points(mat_mult(translation_matrix(0.0f, 0.0f, -8.0f), mat_mult(rotation_matrix_y(-20), chair_1.get_points())));
-    // chair_2.set_points(mat_mult(translation_matrix(0.0f, 0.0f, 6.0f), mat_mult(rotation_matrix_y(70), chair_2.get_points())));
-    // // vector<GLfloat> chair_2_transformed = mat_mult(translation_matrix(0.0f, 0.0f, 6.0f), mat_mult(rotation_matrix_y(70), chair_1));
+    chair_1.set_points(mat_mult(translation_matrix(0.0f, 0.0f, -8.0f), mat_mult(rotation_matrix_y(-20), chair_1.get_points())));
+    chair_2.set_points(mat_mult(translation_matrix(0.0f, 0.0f, 6.0f), mat_mult(rotation_matrix_y(70), chair_2.get_points())));
+    // vector<GLfloat> chair_2_transformed = mat_mult(translation_matrix(0.0f, 0.0f, 6.0f), mat_mult(rotation_matrix_y(70), chair_1));
 
-    // for(int i = 0; i < chair_1.get_points().size(); i++){
-    //     objects_vector.push_back(chair_1.get_points()[i]);
-    // } 
+    for(int i = 0; i < chair_1.get_points().size(); i++){
+        objects_vector.push_back(chair_1.get_points()[i]);
+    } 
 
-    // for(int i = 0; i < chair_2.get_points().size(); i++){
-    //     objects_vector.push_back(chair_2.get_points()[i]);
-    // }
+    for(int i = 0; i < chair_2.get_points().size(); i++){
+        objects_vector.push_back(chair_2.get_points()[i]);
+    }
 
-    // for(int i = 0; i < table.get_points().size(); i++){
-    //     objects_vector.push_back(table.get_points()[i]);
-    // }
+    for(int i = 0; i < table.get_points().size(); i++){
+        objects_vector.push_back(table.get_points()[i]);
+    }
 
-    // objects_vector = to_cartesian_coord(objects_vector);
+    objects_vector = to_cartesian_coord(objects_vector);
+    number_of_sides = (chair_1.get_points().size()*2 + table.get_points().size())/96;
 
-    // number_of_sides = (chair_1.get_points().size()*2 + table.get_points().size())/96;
-    // // cout << number_of_sides << "\n";
-
-    // GLfloat* objects = vector2array(objects_vector);
-    // return objects;
+    GLfloat* objects = vector2array(objects_vector);
+    return objects;
 }
 
 // Construct the color mapping of the scene
 GLfloat* init_color() {
-    unit_cube.set_base_colors(init_base_color(102, 51, 0));
-    GLfloat* array_of_colors = vector2array(unit_cube.get_base_colors());
+    vector<GLfloat> colors; 
+    vector<GLfloat> light_source = {0.0, 9.0, 0.0};
+    vector<GLfloat> camera = {20.0, 15.0, -15.0};
+    ObjectModel shaded_table = apply_shading(table, light_source, camera);
+    GLfloat* array_of_colors = vector2array(shaded_table.get_colors());
     return array_of_colors;
     
 }
@@ -531,8 +594,10 @@ void display_func() {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    GLfloat* objects = init_scene();
-    GLfloat* colors = init_color();
+    glRotatef(theta, 0.0, 1.0, 0.0);
+    // glRotatef(theta, 1.0, 0.0, 0.0);
+
+    
     glVertexPointer(3,          
                     GL_FLOAT,  
                     0,         
@@ -543,9 +608,9 @@ void display_func() {
                    0,
                    colors);
 
-    glDrawArrays(GL_QUADS, 0, number_of_sides*4*6);
+    glDrawArrays(GL_QUADS, 0, 6*4*number_of_sides);
     
-    delete objects;
+    
     glFlush();         
     glutSwapBuffers();
 }
@@ -554,7 +619,6 @@ void idle_func() {
     theta = theta+0.3;
     display_func();
 }
-
 
 int main (int argc, char **argv) {
     // Initialize GLUT
@@ -566,14 +630,20 @@ int main (int argc, char **argv) {
 
     setup();
     init_camera();
+
+    objects = init_scene();
+    colors = init_color();
     
     // Set up our display function
     glutDisplayFunc(display_func);
     // Render our world
-    
+
     glutIdleFunc(idle_func);
     glutMainLoop();
     
+
+    delete objects;
+    delete colors;
     // Remember to call "delete" on your dynmically allocated arrays
     // such that you don't suffer from memory leaks. e.g.
     // delete arr;
