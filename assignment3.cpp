@@ -382,7 +382,7 @@ ObjectModel apply_shading(ObjectModel object_model, vector<GLfloat> light_source
 
     for(int i = 0; i < normals.size(); i+=3) {
         vector<GLfloat> current_points = { model_points[i], model_points[i + 1], model_points[i + 2] };
-        vector<GLfloat> h = generate_h(light_source, camera, model_points);
+        vector<GLfloat> h = generate_h(light_source, camera, current_points);
         vector<GLfloat> normal = {normals[i], normals[i + 1], normals[i + 2]};
         GLfloat light_dot_product = dot_product(normal, light_source);
         GLfloat h_dot_product = dot_product(normals, h);
@@ -443,12 +443,13 @@ void init_camera() {
 }
 
 vector<GLfloat> color_cube(vector<GLfloat> &colors) {
-    colors = join_vectors(colors, init_base_color(0.398, 0.199, 0));
-    colors = join_vectors(colors, init_base_color(0.398, 0.199, 0));
-    colors = join_vectors(colors, init_base_color(0.398, 0.199, 0));
-    colors = join_vectors(colors, init_base_color(0.398, 0.199, 0));
-    colors = join_vectors(colors, init_base_color(0.398, 0.199, 0));
-    colors = join_vectors(colors, init_base_color(0.398, 0.199, 0));
+    colors = join_vectors(colors, init_base_color(1, 0.796, 0.398));
+    colors = join_vectors(colors, init_base_color(1, 0.796, 0.398));
+    colors = join_vectors(colors, init_base_color(1, 0.796, 0.398));
+    colors = join_vectors(colors, init_base_color(1, 0.796, 0.398));
+    colors = join_vectors(colors, init_base_color(1, 0.796, 0.398));
+    colors = join_vectors(colors, init_base_color(1, 0.796, 0.398));
+
     return colors;
 
 }
@@ -577,7 +578,7 @@ GLfloat* init_scene() {
 // Construct the color mapping of the scene
 GLfloat* init_color() {
     vector<GLfloat> colors; 
-    vector<GLfloat> light_source = {0.0, 9.0, 0.0};
+    vector<GLfloat> light_source = {0.0, 5.0, -5.0};
     vector<GLfloat> camera = {20.0, 15.0, -15.0};
     ObjectModel shaded_table = apply_shading(table, light_source, camera);
     GLfloat* array_of_colors = vector2array(shaded_table.get_colors());
