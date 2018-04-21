@@ -243,9 +243,9 @@ vector<GLfloat> cross_product(vector<GLfloat> A, vector<GLfloat> B) {
     vector<GLfloat> C;
     
     C = {
-        A[2]*B[3] - A[3]*B[2],
-        A[3]*B[1] - A[1]*B[3],
-        A[1]*B[2] - A[2]*B[1]
+        A[1]*B[2] - A[2]*B[1],
+        A[2]*B[0] - A[0]*B[2],
+        A[0]*B[1] - A[1]*B[0]
       };
 
     return C;
@@ -270,6 +270,7 @@ vector<GLfloat> make_unit(vector<GLfloat> A) {
 }
 
 vector<GLfloat> vector_subtraction(vector<GLfloat> A, vector<GLfloat> B) {
+
     vector<GLfloat> C = {
         A[0] - B[0],
         A[1] - B[1],
@@ -295,9 +296,12 @@ vector<GLfloat> generate_normals(vector<GLfloat> points) {
         vector<GLfloat> q_0 = { points[i], points[i + 1], points[i + 2]};
         vector<GLfloat> q_1 = { points[i + 3], points[i + 4], points[i + 5]};
         vector<GLfloat> q_3 = { points[i + 9], points[i + 10], points[i + 11]};
+        // cout << "Vector: " << vector_subtraction(q_1, q_0)[0] << "\n";
+
         vector_1 = join_vectors(vector_1, vector_subtraction(q_1, q_0));
         vector_2 = join_vectors(vector_2, vector_subtraction(q_3, q_0));
-
+        // cout << "Vector_2" << vector_1.size() << "\n";
+        // cout << "cross: " << cross_product(vector_1, vector_2)[2] << "\n";
         normals = join_vectors(normals, make_unit(cross_product(vector_1, vector_2)));
         normals = join_vectors(normals, make_unit(cross_product(vector_1, vector_2)));
         normals = join_vectors(normals, make_unit(cross_product(vector_1, vector_2)));
@@ -351,10 +355,11 @@ vector<GLfloat> generate_h(vector<GLfloat> &light_source, vector<GLfloat> &camer
 
     GLfloat total_magnitude = v_magnitude + light_source_magnitude;
     vector<GLfloat> h = {
-                        (light_source[0] + v[0])/total_magnitude, 
-                        (light_source[1] + v[1])/total_magnitude, 
-                        (light_source[2] + v[2])/total_magnitude
+                        (light_source[0] + v[0]), 
+                        (light_source[1] + v[1]), 
+                        (light_source[2] + v[2])
                     };
+                    h = make_unit(h);
     return h; 
         
 }
@@ -368,32 +373,40 @@ GLfloat dot_product(vector<GLfloat> A, vector<GLfloat> B) {
 // Generates the colors of a set of surfaces based on the light source,
 // surface normals, and base color of the surface
 ObjectModel apply_shading(ObjectModel object_model, vector<GLfloat> light_source, vector<GLfloat> camera) {
-    GLfloat amb, diff, spec = 1;
-    // GLfloat colors;
+    GLfloat amb = 0.65; 
+    GLfloat diff = 0.35; 
+    GLfloat spec = 0.11;
 
     vector<GLfloat> model_points = object_model.get_points();
 
     vector<GLfloat> base_colors = object_model.get_base_colors();
 
-    object_model.set_normals(generate_normals(model_points));
     vector<GLfloat> normals = object_model.get_normals();
 
     vector<GLfloat> colors;
 
     for(int i = 0; i < normals.size(); i+=3) {
+        // cout << model_points[i] << model_points[i + 1] << model_points[i + 2] << "\n";
         vector<GLfloat> current_points = { model_points[i], model_points[i + 1], model_points[i + 2] };
+        
         vector<GLfloat> h = generate_h(light_source, camera, current_points);
+        cout << "H:" << h[0] << h[1] << h[2] << "\n";
         vector<GLfloat> normal = {normals[i], normals[i + 1], normals[i + 2]};
+        // cout << "Normal:" << normal[i] << normal[i+ 1] << normal[i+2] << "\n";
         GLfloat light_dot_product = dot_product(normal, light_source);
+        // cout << light_dot_product << "\n";
         GLfloat h_dot_product = dot_product(normals, h);
-        colors.push_back(base_colors[i] * (amb + diff * (light_dot_product)) + spec * base_colors[i] * h_dot_product);
-        colors.push_back(base_colors[i + 1] * (amb + diff * (light_dot_product)) + spec * base_colors[i + 1] * h_dot_product);
-        colors.push_back(base_colors[i + 2] * (amb + diff * (light_dot_product)) + spec * base_colors[i + 2] * h_dot_product);
+        // cout << "Colors:" << base_colors[i + 2] * (amb + diff * (light_dot_product)) + (spec * base_colors[i + 2] * h_dot_product) << "\n";
+        // cout << "H_D:" << h_dot_product << "\n";
+        // cout << (spec * base_colors[i] * h_dot_product) << "\n";
+        colors.push_back(base_colors[i] * (amb + diff * (light_dot_product)) + (spec * base_colors[i] * h_dot_product));
+        colors.push_back(base_colors[i + 1] * (amb + diff * (light_dot_product)) + (spec * base_colors[i + 1] * h_dot_product));
+        colors.push_back(base_colors[i + 2] * (amb + diff * (light_dot_product)) + (spec * base_colors[i + 2] * h_dot_product));
     }
 
     object_model.set_colors(colors);
-    cout << object_model.get_colors()[1] << "\n";
     // base_colors*(amb + diff(normals[0]))
+    cout << colors[3] << "\n";
 
     // object_model.set_colors(colors);
     return object_model;
@@ -454,6 +467,9 @@ vector<GLfloat> color_cube(vector<GLfloat> &colors) {
 
 }
 
+vector<GLfloat> light_source = {1.0, 0.0, -5.0};
+vector<GLfloat> camera = {20.0, 15.0, -15.0};
+
 ObjectModel make_chair(ObjectModel chair) {
 
     vector<GLfloat> unit_cube = build_cube();
@@ -498,6 +514,7 @@ ObjectModel make_chair(ObjectModel chair) {
     color_cube(colors);
     color_cube(colors);
     color_cube(colors);
+
     chair.set_base_colors(colors);
 
     chair.set_normals(generate_normals(chair.get_points()));
@@ -524,23 +541,45 @@ ObjectModel make_table(ObjectModel table) {
 
     vector<GLfloat> colors;
     table.set_points(collection_of_table_pieces);
-    color_cube(colors);
-    color_cube(colors);
-    color_cube(colors);
-    color_cube(colors);
-    color_cube(colors);
+    colors = color_cube(colors);
+    colors = color_cube(colors);
+    colors = color_cube(colors);
+    colors = color_cube(colors);
+    colors = color_cube(colors);
+
+    // color_cube(colors);
+    // color_cube(colors);
+    // color_cube(colors);
+    // color_cube(colors);
+    // color_cube(colors);
+    // color_cube(colors);
+    
     table.set_base_colors(colors);
     table.set_normals(generate_normals(table.get_points()));
+    table = apply_shading(table, light_source, camera);
     return table;
-    // return table;
 }
 ObjectModel unit_cube;
+
+ObjectModel make_cube() {
+    vector<GLfloat> colors; 
+    unit_cube.set_points(build_cube());
+    unit_cube.set_normals(generate_normals(unit_cube.get_points()));
+    
+    color_cube(colors);
+    unit_cube.set_base_colors(colors);
+
+    ObjectModel shaded_cube = apply_shading(unit_cube, light_source, camera);
+
+
+    return shaded_cube;
+}
+
 // Construct the scene using objects built from cubes/prisms
 GLfloat* init_scene() {
-    // vector<GLfloat> cube = build_cube();
-    // unit_cube.set_points(build_cube());
-    // vector<GLfloat> cartesian_cube = to_cartesian_coord(cube); 
-    // unit_cube.set_points(cartesian_cube);
+    // ObjectModel cube = make_cube();
+    // vector<GLfloat> unit_cube = cube.get_points();
+    // vector<GLfloat> cartesian_cube = to_cartesian_coord(unit_cube);
     // GLfloat* array_cube = vector2array(cartesian_cube);
     // number_of_sides = 6;
     // return array_cube;
@@ -551,11 +590,13 @@ GLfloat* init_scene() {
     // chair_1 = make_chair(chair_1);
     // chair_2 = make_chair(chair_2);
     table = make_table(table);
+    vector<GLfloat> light_cube = mat_mult(translation_matrix(0.0, 10.0, -5.0), build_cube());
 
     chair_1.set_points(mat_mult(translation_matrix(0.0f, 0.0f, -8.0f), mat_mult(rotation_matrix_y(-20), chair_1.get_points())));
     chair_2.set_points(mat_mult(translation_matrix(0.0f, 0.0f, 6.0f), mat_mult(rotation_matrix_y(70), chair_2.get_points())));
     // vector<GLfloat> chair_2_transformed = mat_mult(translation_matrix(0.0f, 0.0f, 6.0f), mat_mult(rotation_matrix_y(70), chair_1));
 
+    // light_cube = 
     for(int i = 0; i < chair_1.get_points().size(); i++){
         objects_vector.push_back(chair_1.get_points()[i]);
     } 
@@ -568,6 +609,10 @@ GLfloat* init_scene() {
         objects_vector.push_back(table.get_points()[i]);
     }
 
+    for(int i = 0; i < light_cube.size(); i++) {
+        objects_vector.push_back(light_cube[i]);
+    }
+
     objects_vector = to_cartesian_coord(objects_vector);
     number_of_sides = (chair_1.get_points().size()*2 + table.get_points().size())/96;
 
@@ -577,11 +622,10 @@ GLfloat* init_scene() {
 
 // Construct the color mapping of the scene
 GLfloat* init_color() {
-    vector<GLfloat> colors; 
-    vector<GLfloat> light_source = {0.0, 5.0, -5.0};
-    vector<GLfloat> camera = {20.0, 15.0, -15.0};
-    ObjectModel shaded_table = apply_shading(table, light_source, camera);
+    ObjectModel shaded_table = make_table(table);
     GLfloat* array_of_colors = vector2array(shaded_table.get_colors());
+    /*ObjectModel shaded_table = apply_shading(table, light_source, camera);
+    GLfloat* array_of_colors = vector2array(shaded_table.get_colors());*/
     return array_of_colors;
     
 }
@@ -609,7 +653,8 @@ void display_func() {
                    0,
                    colors);
 
-    glDrawArrays(GL_QUADS, 0, 6*4*number_of_sides);
+    // glDrawArrays(GL_QUADS, 0, 24);
+    glDrawArrays(GL_QUADS, 0, 6*4*number_of_sides + 30);
     
     
     glFlush();         
