@@ -27,6 +27,7 @@
 #include <math.h>
 #include <vector>
 #include <iostream>
+#include <cstdlib>
 using namespace std;
 
 int number_of_sides;
@@ -217,6 +218,7 @@ vector<GLfloat> build_cube() {
             result.push_back(sides_vector[i][j]);
         }
     }
+    result = to_cartesian_coord(result);
     return result;
 }
 
@@ -289,24 +291,28 @@ vector<GLfloat> generate_normals(vector<GLfloat> points) {
     vector<GLfloat> vector_1;
     vector<GLfloat> vector_2;
 
-    for(int i = 0; i < points.size(); i = i + three_components_of_vertex * points_in_plane) {
+    for(int i = 0; i < points.size(); i = i + 12) {
+        cout << points[i] << " " << points[i + 1] << " " << points[i + 2] << " " << points[i + 3] << " " << points[i + 4] << " " << points[i + 5] << " " << points[i + 6] << " " << points[i + 7] << " " << points[i + 8] << " " << points[i + 9] << " " << points[i + 10] << " " << points[i + 11] << " " << "\n";
         // generate_vector(points, vector_1, 3);
         // generate_vector(points, vector_2, 9);
         // *** Make a helper function possibly that makes vectors
         vector<GLfloat> q_0 = { points[i], points[i + 1], points[i + 2]};
         vector<GLfloat> q_1 = { points[i + 3], points[i + 4], points[i + 5]};
         vector<GLfloat> q_3 = { points[i + 9], points[i + 10], points[i + 11]};
+        // cout << "q_0 " << q_0[0] << " " << q_0[1] << " " << q_0[2] << "\n";
+        // cout << "q_1 " << q_1[0] << " " << q_1[1] << " " << q_1[2] << "\n";
+        // cout << "q_3 " << q_3[0] << " " << q_3[1] << " " << q_3[2] << "\n";
         // cout << "Vector: " << vector_subtraction(q_1, q_0)[0] << "\n";
 
-        vector_1 = join_vectors(vector_1, vector_subtraction(q_1, q_0));
-        vector_2 = join_vectors(vector_2, vector_subtraction(q_3, q_0));
-        // cout << "Vector_2" << vector_1.size() << "\n";
-        // cout << "cross: " << cross_product(vector_1, vector_2)[2] << "\n";
+        vector_1 = vector_subtraction(q_1, q_0);
+        vector_2 = vector_subtraction(q_3, q_0);
+        cout << "Vector_2" << vector_1.size() << "\n";
+        cout << "cross: " << cross_product(vector_1, vector_2)[0] << cross_product(vector_1, vector_2)[1] << cross_product(vector_1, vector_2)[2] << "\n";
         normals = join_vectors(normals, make_unit(cross_product(vector_1, vector_2)));
         normals = join_vectors(normals, make_unit(cross_product(vector_1, vector_2)));
         normals = join_vectors(normals, make_unit(cross_product(vector_1, vector_2)));
         normals = join_vectors(normals, make_unit(cross_product(vector_1, vector_2)));
-
+        cout << normals[i] << " " << normals[i + 1] << " " << normals[i + 2] << "\n";
         // normals.push_back(normals)
     }
     return normals;
@@ -355,11 +361,11 @@ vector<GLfloat> generate_h(vector<GLfloat> &light_source, vector<GLfloat> &camer
 
     GLfloat total_magnitude = v_magnitude + light_source_magnitude;
     vector<GLfloat> h = {
-                        (light_source[0] + v[0]), 
-                        (light_source[1] + v[1]), 
-                        (light_source[2] + v[2])
+                        (light_source[0] + v[0])/total_magnitude, 
+                        (light_source[1] + v[1])/total_magnitude, 
+                        (light_source[2] + v[2])/total_magnitude
                     };
-                    h = make_unit(h);
+    // cout << h[0] << h[1] << h[2] << "\n";
     return h; 
         
 }
@@ -385,17 +391,21 @@ ObjectModel apply_shading(ObjectModel object_model, vector<GLfloat> light_source
 
     vector<GLfloat> colors;
 
+    // cout << model_points[6] << "\n";
+    // cout << normals.size() << "\n";
+
     for(int i = 0; i < normals.size(); i+=3) {
         // cout << model_points[i] << model_points[i + 1] << model_points[i + 2] << "\n";
         vector<GLfloat> current_points = { model_points[i], model_points[i + 1], model_points[i + 2] };
-        
+        cout << "Current Point: " << current_points[0] << " " << current_points[1] << " " << current_points[2] << "\n";
         vector<GLfloat> h = generate_h(light_source, camera, current_points);
-        cout << "H:" << h[0] << h[1] << h[2] << "\n";
+        // cout << "H:" << h[0] << h[1] << h[2] << "\n";
         vector<GLfloat> normal = {normals[i], normals[i + 1], normals[i + 2]};
-        // cout << "Normal:" << normal[i] << normal[i+ 1] << normal[i+2] << "\n";
+        cout << "Normal:" << normal[0] << " " << normal[1]  << " " << normal[2] << " \n";
         GLfloat light_dot_product = dot_product(normal, light_source);
         // cout << light_dot_product << "\n";
         GLfloat h_dot_product = dot_product(normals, h);
+        // light_dot_product = float(random()%2);
         // cout << "Colors:" << base_colors[i + 2] * (amb + diff * (light_dot_product)) + (spec * base_colors[i + 2] * h_dot_product) << "\n";
         // cout << "H_D:" << h_dot_product << "\n";
         // cout << (spec * base_colors[i] * h_dot_product) << "\n";
@@ -406,7 +416,7 @@ ObjectModel apply_shading(ObjectModel object_model, vector<GLfloat> light_source
 
     object_model.set_colors(colors);
     // base_colors*(amb + diff(normals[0]))
-    cout << colors[3] << "\n";
+    // cout << colors[3] << "\n";
 
     // object_model.set_colors(colors);
     return object_model;
@@ -467,7 +477,7 @@ vector<GLfloat> color_cube(vector<GLfloat> &colors) {
 
 }
 
-vector<GLfloat> light_source = {1.0, 0.0, -5.0};
+vector<GLfloat> light_source = {0.0, 1.0, 0.0};
 vector<GLfloat> camera = {20.0, 15.0, -15.0};
 
 ObjectModel make_chair(ObjectModel chair) {
@@ -556,7 +566,7 @@ ObjectModel make_table(ObjectModel table) {
     
     table.set_base_colors(colors);
     table.set_normals(generate_normals(table.get_points()));
-    table = apply_shading(table, light_source, camera);
+    // table = apply_shading(table, light_source, camera);
     return table;
 }
 ObjectModel unit_cube;
@@ -568,62 +578,62 @@ ObjectModel make_cube() {
     
     color_cube(colors);
     unit_cube.set_base_colors(colors);
+    // cout << "yeeyee" << "\n";
+    unit_cube = apply_shading(unit_cube, light_source, camera);
 
-    ObjectModel shaded_cube = apply_shading(unit_cube, light_source, camera);
 
-
-    return shaded_cube;
+    return unit_cube;
 }
 
 // Construct the scene using objects built from cubes/prisms
 GLfloat* init_scene() {
-    // ObjectModel cube = make_cube();
-    // vector<GLfloat> unit_cube = cube.get_points();
-    // vector<GLfloat> cartesian_cube = to_cartesian_coord(unit_cube);
-    // GLfloat* array_cube = vector2array(cartesian_cube);
-    // number_of_sides = 6;
-    // return array_cube;
+    vector<GLfloat> cube = unit_cube.get_points();
+    GLfloat* array_cube = vector2array(cube);
+    number_of_sides = 6;
+    return array_cube;
 
-    vector<vector<GLfloat>> collection_of_chair_pieces;
-    vector<vector<GLfloat>> collection_of_table_pieces;
-    vector<GLfloat> objects_vector;
-    // chair_1 = make_chair(chair_1);
-    // chair_2 = make_chair(chair_2);
-    table = make_table(table);
-    vector<GLfloat> light_cube = mat_mult(translation_matrix(0.0, 10.0, -5.0), build_cube());
+    // vector<vector<GLfloat>> collection_of_chair_pieces;
+    // vector<vector<GLfloat>> collection_of_table_pieces;
+    // vector<GLfloat> objects_vector;
+    // // chair_1 = make_chair(chair_1);
+    // // chair_2 = make_chair(chair_2);
+    // table = make_table(table);
+    // vector<GLfloat> light_cube = mat_mult(translation_matrix(0.0, 10.0, -5.0), build_cube());
 
-    chair_1.set_points(mat_mult(translation_matrix(0.0f, 0.0f, -8.0f), mat_mult(rotation_matrix_y(-20), chair_1.get_points())));
-    chair_2.set_points(mat_mult(translation_matrix(0.0f, 0.0f, 6.0f), mat_mult(rotation_matrix_y(70), chair_2.get_points())));
-    // vector<GLfloat> chair_2_transformed = mat_mult(translation_matrix(0.0f, 0.0f, 6.0f), mat_mult(rotation_matrix_y(70), chair_1));
+    // chair_1.set_points(mat_mult(translation_matrix(0.0f, 0.0f, -8.0f), mat_mult(rotation_matrix_y(-20), chair_1.get_points())));
+    // chair_2.set_points(mat_mult(translation_matrix(0.0f, 0.0f, 6.0f), mat_mult(rotation_matrix_y(70), chair_2.get_points())));
+    // // vector<GLfloat> chair_2_transformed = mat_mult(translation_matrix(0.0f, 0.0f, 6.0f), mat_mult(rotation_matrix_y(70), chair_1));
 
-    // light_cube = 
-    for(int i = 0; i < chair_1.get_points().size(); i++){
-        objects_vector.push_back(chair_1.get_points()[i]);
-    } 
+    // // light_cube = 
+    // for(int i = 0; i < chair_1.get_points().size(); i++){
+    //     objects_vector.push_back(chair_1.get_points()[i]);
+    // } 
 
-    for(int i = 0; i < chair_2.get_points().size(); i++){
-        objects_vector.push_back(chair_2.get_points()[i]);
-    }
+    // for(int i = 0; i < chair_2.get_points().size(); i++){
+    //     objects_vector.push_back(chair_2.get_points()[i]);
+    // }
 
-    for(int i = 0; i < table.get_points().size(); i++){
-        objects_vector.push_back(table.get_points()[i]);
-    }
+    // for(int i = 0; i < table.get_points().size(); i++){
+    //     objects_vector.push_back(table.get_points()[i]);
+    // }
 
-    for(int i = 0; i < light_cube.size(); i++) {
-        objects_vector.push_back(light_cube[i]);
-    }
+    // for(int i = 0; i < light_cube.size(); i++) {
+    //     objects_vector.push_back(light_cube[i]);
+    // }
 
-    objects_vector = to_cartesian_coord(objects_vector);
-    number_of_sides = (chair_1.get_points().size()*2 + table.get_points().size())/96;
+    // objects_vector = to_cartesian_coord(objects_vector);
+    // number_of_sides = (chair_1.get_points().size()*2 + table.get_points().size())/96;
 
-    GLfloat* objects = vector2array(objects_vector);
-    return objects;
+    // GLfloat* objects = vector2array(objects_vector);
+    // return objects;
 }
 
 // Construct the color mapping of the scene
 GLfloat* init_color() {
-    ObjectModel shaded_table = make_table(table);
-    GLfloat* array_of_colors = vector2array(shaded_table.get_colors());
+    cout << unit_cube.get_base_colors().size() << "\n";
+    GLfloat* array_of_colors = vector2array(unit_cube.get_colors());
+    // ObjectModel shaded_table = make_table(table);
+    // GLfloat* array_of_colors = vector2array(shaded_table.get_colors());
     /*ObjectModel shaded_table = apply_shading(table, light_source, camera);
     GLfloat* array_of_colors = vector2array(shaded_table.get_colors());*/
     return array_of_colors;
@@ -640,7 +650,7 @@ void display_func() {
     glLoadIdentity();
 
     glRotatef(theta, 0.0, 1.0, 0.0);
-    // glRotatef(theta, 1.0, 0.0, 0.0);
+    glRotatef(theta, 1.0, 0.0, 0.0);
 
     
     glVertexPointer(3,          
@@ -653,8 +663,8 @@ void display_func() {
                    0,
                    colors);
 
-    // glDrawArrays(GL_QUADS, 0, 24);
-    glDrawArrays(GL_QUADS, 0, 6*4*number_of_sides + 30);
+    glDrawArrays(GL_QUADS, 0, 36);
+    // glDrawArrays(GL_QUADS, 0, 6*4*number_of_sides + 30);
     
     
     glFlush();         
@@ -676,7 +686,7 @@ int main (int argc, char **argv) {
 
     setup();
     init_camera();
-
+    make_cube();
     objects = init_scene();
     colors = init_color();
     
