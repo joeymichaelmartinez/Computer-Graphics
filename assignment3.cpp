@@ -1,12 +1,9 @@
 /***
  Assignment-3: Shading via Lighting and Colors
  
- Name: Wong, Alex (Please write your name in Last Name, First Name format)
+ Name: Martinez, Joseph (Please write your name in Last Name, First Name format)
  
- Collaborators: Doe, John; Doe, Jane
- ** Note: although the assignment should be completed individually
- you may speak with classmates on high level algorithmic concepts. Please
- list their names in this section
+ Collaborators: Hardy, John
  
  Project Summary: A short paragraph (3-4 sentences) describing the work you
  did for the project.
@@ -34,7 +31,7 @@ int number_of_sides;
 GLfloat* objects;
 GLfloat* colors;
 vector<GLfloat> light_source = {0.0, 2.0, 5.0};
-vector<GLfloat> camera = {20.0, 15.0, -15.0};
+vector<GLfloat> camera = {35.0, 15.0, -30.0};
 /**************************************************
  *              Object Model Class                *
  *                                                *
@@ -63,6 +60,9 @@ public:
 ObjectModel chair_1;
 ObjectModel chair_2;
 ObjectModel table;
+ObjectModel carpet;
+ObjectModel lamp;
+ObjectModel cup;
 
 /**************************************************
  *  Rectangular Prisms via Hierarchical Modeling  *
@@ -440,8 +440,8 @@ void init_camera() {
     // Camera parameters
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(50.0, 1.0, 2.0, 50.0);
-    gluLookAt(20.0, 15.0, -15.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0); // 2, 6, 5
+    gluPerspective(50.0, 1.0, 2.0, 70.0);
+    gluLookAt(35.0, 15.0, -30.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0); // 2, 6, 5
 }
 
 vector<GLfloat> color_cube(vector<GLfloat> &colors, float r, float g, float b) {
@@ -517,10 +517,10 @@ ObjectModel make_table() {
     
     vector<GLfloat> collection_of_table_pieces;
 
-    vector<GLfloat> table_leg_1 = mat_mult(translation_matrix(-3.0f, 2.0f, 4.25f), mat_mult(scaling_matrix(0.5, 9.0f, 0.5f), unit_cube));
-    vector<GLfloat> table_leg_2 = mat_mult(translation_matrix(3.0f, 2.0f, 4.25f), mat_mult(scaling_matrix(0.5f, 9.0f, 0.5f), unit_cube));
-    vector<GLfloat> table_leg_3 = mat_mult(translation_matrix(-3.0f, 2.0f, -4.25f), mat_mult(scaling_matrix(0.5, 9.0f, 0.5f), unit_cube));
-    vector<GLfloat> table_leg_4 = mat_mult(translation_matrix(3.0f, 2.0f, -4.25f), mat_mult(scaling_matrix(0.5f, 9.0f, 0.5f), unit_cube));
+    vector<GLfloat> table_leg_1 = mat_mult(translation_matrix(-3.0f, 2.5f, 4.25f), mat_mult(scaling_matrix(0.5, 9.0f, 0.5f), unit_cube));
+    vector<GLfloat> table_leg_2 = mat_mult(translation_matrix(3.0f, 2.5f, 4.25f), mat_mult(scaling_matrix(0.5f, 9.0f, 0.5f), unit_cube));
+    vector<GLfloat> table_leg_3 = mat_mult(translation_matrix(-3.0f, 2.5f, -4.25f), mat_mult(scaling_matrix(0.5, 9.0f, 0.5f), unit_cube));
+    vector<GLfloat> table_leg_4 = mat_mult(translation_matrix(3.0f, 2.5f, -4.25f), mat_mult(scaling_matrix(0.5f, 9.0f, 0.5f), unit_cube));
     vector<GLfloat> table_top = mat_mult(translation_matrix(0.0f, 7.0f, 0.0f), mat_mult(scaling_matrix(8.0f, 0.5f, 10.0f), unit_cube));
 
     collection_of_table_pieces = join_vectors(collection_of_table_pieces, table_leg_1);
@@ -544,32 +544,108 @@ ObjectModel make_table() {
     table = apply_shading(table, light_source, camera);
     return table;
 }
-ObjectModel unit_cube;
 
-ObjectModel make_cube() {
+ObjectModel make_carpet() {
     vector<GLfloat> colors;
-    vector<GLfloat> cube = to_homogenous_coord(build_cube());
-    cube =  to_cartesian_coord(mat_mult(translation_matrix(0, 2, 0), cube)),
-    unit_cube.set_points(build_cube());
-    unit_cube.set_normals(generate_normals(unit_cube.get_points()));
+    vector<GLfloat> unit_cube = to_homogenous_coord(build_cube());
+    unit_cube =  to_cartesian_coord(mat_mult(translation_matrix(0, -2.5, 0), mat_mult(scaling_matrix(20, .2, 40), unit_cube))),
+    carpet.set_points((unit_cube));
+    carpet.set_normals(generate_normals(carpet.get_points()));
     
-    color_cube(colors, .398, .199, 0);
-    unit_cube.set_base_colors(colors);
-    unit_cube = apply_shading(unit_cube, light_source, camera);
+    color_cube(colors, .199, .398, 1);
+    carpet.set_base_colors(colors);
+    carpet = apply_shading(carpet, light_source, camera);
 
-    return unit_cube;
+    return carpet;
+}
+
+ObjectModel make_lamp() {
+    vector<GLfloat> unit_cube = to_homogenous_coord(build_cube());
+    vector<GLfloat> collection_of_lamp_pieces;
+
+    vector<GLfloat> leg = mat_mult(translation_matrix(0.0f, 6.0f, 0.0f), mat_mult(scaling_matrix(0.5, 16.0f, 0.5f), unit_cube));
+    vector<GLfloat> base = mat_mult(translation_matrix(0.0f, -2.0f, 0.0f), mat_mult(scaling_matrix(4.0f, 0.5f, 4.0f), unit_cube));
+    vector<GLfloat> shade_1 = mat_mult(translation_matrix(0.0f, 14.0f, -2.0f), mat_mult(scaling_matrix(4.2f, 5.0f, 0.3f), unit_cube));
+    vector<GLfloat> shade_2 = mat_mult(translation_matrix(0.0f, 14.0f, 2.0f), mat_mult(scaling_matrix(4.2f, 5.0f, 0.3f), unit_cube));
+    vector<GLfloat> shade_3 = mat_mult(translation_matrix(2.0f, 14.0f, 0.0f), mat_mult(scaling_matrix(0.3f, 5.0f, 4.2f), unit_cube));
+    vector<GLfloat> shade_4 = mat_mult(translation_matrix(-2.0f, 14.0f, 0.0f), mat_mult(scaling_matrix(0.3f, 5.0f, 4.2f), unit_cube));
+    
+    collection_of_lamp_pieces = join_vectors(collection_of_lamp_pieces, leg);
+    collection_of_lamp_pieces = join_vectors(collection_of_lamp_pieces, base);
+    collection_of_lamp_pieces = join_vectors(collection_of_lamp_pieces, shade_1);
+    collection_of_lamp_pieces = join_vectors(collection_of_lamp_pieces, shade_2);
+    collection_of_lamp_pieces = join_vectors(collection_of_lamp_pieces, shade_3);
+    collection_of_lamp_pieces = join_vectors(collection_of_lamp_pieces, shade_4);
+
+    number_of_sides = number_of_sides + collection_of_lamp_pieces.size();
+
+    vector<GLfloat> colors;
+    lamp.set_points(to_cartesian_coord(collection_of_lamp_pieces));
+    colors = color_cube(colors, .5, .5, 0.5);
+    colors = color_cube(colors, 0, 0, 0);
+    colors = color_cube(colors, .5, 0, 0);
+    colors = color_cube(colors, .5, 0, 0);
+    colors = color_cube(colors, .5, 0, 0);
+    colors = color_cube(colors, .5, 0, 0);
+    
+    lamp.set_base_colors(colors);
+    lamp.set_normals(generate_normals(lamp.get_points()));
+    lamp = apply_shading(lamp, light_source, camera);
+    return lamp;
+}
+
+ObjectModel make_cup() {
+    vector<GLfloat> unit_cube = to_homogenous_coord(build_cube());
+    vector<GLfloat> collection_of_cup_pieces;
+
+    vector<GLfloat> left = mat_mult(translation_matrix(0.4f, 9.0f, 0.0f), mat_mult(scaling_matrix(0.2, 2.5f, 1.0f), unit_cube));
+    vector<GLfloat> right = mat_mult(translation_matrix(-0.4f, 9.0f, 0.0f), mat_mult(scaling_matrix(0.2, 2.5f, 1.0f), unit_cube));
+    vector<GLfloat> front = mat_mult(translation_matrix(0.0f, 9.0f, 0.4f), mat_mult(scaling_matrix(1.0, 2.5f, 0.2f), unit_cube));
+    vector<GLfloat> back = mat_mult(translation_matrix(0.0f, 9.0f, -0.4f), mat_mult(scaling_matrix(1.0, 2.5f, 0.2f), unit_cube));
+    vector<GLfloat> bottom = mat_mult(translation_matrix(0.0f, 7.0f, 0.0f), mat_mult(scaling_matrix(1.0, 0.2f, 1.0f), unit_cube));
+    vector<GLfloat> handle_1 = mat_mult(translation_matrix(0.0f, 9.5f, -0.8f), mat_mult(scaling_matrix(0.4f, 0.2f, 0.6f), unit_cube));
+    vector<GLfloat> handle_2 = mat_mult(translation_matrix(0.0f, 9.0f, -1.0f), mat_mult(scaling_matrix(0.4f, 1.0f, 0.2f), unit_cube));
+    vector<GLfloat> handle_3 = mat_mult(translation_matrix(0.0f, 8.5f, -0.8f), mat_mult(scaling_matrix(0.4f, 0.2f, 0.6f), unit_cube));
+    
+    collection_of_cup_pieces = join_vectors(collection_of_cup_pieces, left);
+    collection_of_cup_pieces = join_vectors(collection_of_cup_pieces, right);
+    collection_of_cup_pieces = join_vectors(collection_of_cup_pieces, front);
+    collection_of_cup_pieces = join_vectors(collection_of_cup_pieces, back);
+    collection_of_cup_pieces = join_vectors(collection_of_cup_pieces, bottom);
+    collection_of_cup_pieces = join_vectors(collection_of_cup_pieces, handle_1);
+    collection_of_cup_pieces = join_vectors(collection_of_cup_pieces, handle_2);
+    collection_of_cup_pieces = join_vectors(collection_of_cup_pieces, handle_3);
+
+    number_of_sides = number_of_sides + collection_of_cup_pieces.size();
+
+    vector<GLfloat> colors;
+    cup.set_points(to_cartesian_coord(collection_of_cup_pieces));
+    colors = color_cube(colors, 1, 1, 1);
+    colors = color_cube(colors, 1, 1, 1);
+    colors = color_cube(colors, 1, 1, 1);
+    colors = color_cube(colors, 1, 1, 1);
+    colors = color_cube(colors, 1,1,1);
+    colors = color_cube(colors, 1,1,1);
+    colors = color_cube(colors, 1,1,1);
+    colors = color_cube(colors, 1,1,1);
+    
+    cup.set_base_colors(colors);
+    cup.set_normals(generate_normals(cup.get_points()));
+    cup = apply_shading(cup, light_source, camera);
+    return cup;
 }
 
 // Construct the scene using objects built from cubes/prisms
 GLfloat* init_scene() {
 
-    vector<vector<GLfloat>> collection_of_chair_pieces;
-    vector<vector<GLfloat>> collection_of_table_pieces;
     vector<GLfloat> objects_vector;
     vector<GLfloat> chair_points = to_homogenous_coord(chair_1.get_points());
     chair_1.set_points(to_cartesian_coord(mat_mult(translation_matrix(0.0f, 0.0f, -8.0f), mat_mult(rotation_matrix_y(-20), chair_points))));
     chair_2.set_points(to_cartesian_coord(mat_mult(translation_matrix(0.0f, 0.0f, 6.0f), mat_mult(rotation_matrix_y(70), chair_points))));
     
+    vector<GLfloat> lamp_points = to_homogenous_coord(lamp.get_points());
+    lamp.set_points(to_cartesian_coord(mat_mult(translation_matrix(5.0f, 0.0f, -15.0f), lamp_points)));
+
     for(int i = 0; i < chair_1.get_points().size(); i++){
         objects_vector.push_back(chair_1.get_points()[i]);
     } 
@@ -582,8 +658,16 @@ GLfloat* init_scene() {
         objects_vector.push_back(table.get_points()[i]);
     }
 
-    for(int i = 0; i < unit_cube.get_points().size(); i++) {
-        objects_vector.push_back(unit_cube.get_points()[i]);
+    for(int i = 0; i < carpet.get_points().size(); i++) {
+        objects_vector.push_back(carpet.get_points()[i]);
+    }
+
+    for(int i = 0; i < lamp.get_points().size(); i++) {
+        objects_vector.push_back(lamp.get_points()[i]);
+    }
+
+    for(int i = 0; i < cup.get_points().size(); i++) {
+        objects_vector.push_back(cup.get_points()[i]);
     }
 
     GLfloat* objects = vector2array(objects_vector);
@@ -595,10 +679,14 @@ GLfloat* init_color() {
     vector<GLfloat> chair_1_colors = chair_1.get_colors();
     vector<GLfloat> chair_2_colors = chair_2.get_colors();
     vector<GLfloat> table_colors = table.get_colors();
-    vector<GLfloat> cube_colors = unit_cube.get_colors();
+    vector<GLfloat> carpet_colors = carpet.get_colors();
+    vector<GLfloat> lamp_colors = lamp.get_colors();
+    vector<GLfloat> cup_colors = cup.get_colors();
     vector<GLfloat> all_colors = join_vectors(chair_1_colors, chair_2_colors);
     all_colors = join_vectors(all_colors, table_colors);
-    all_colors = join_vectors(all_colors, cube_colors);
+    all_colors = join_vectors(all_colors, carpet_colors);
+    all_colors = join_vectors(all_colors, lamp_colors);
+    all_colors = join_vectors(all_colors, cup_colors);
     GLfloat* array_of_colors = vector2array(all_colors);
     return array_of_colors;
     
@@ -614,7 +702,7 @@ void display_func() {
     glLoadIdentity();
 
     glRotatef(theta, 0.0, 1.0, 0.0);
-    glRotatef(theta, 1.0, 0.0, 0.0);
+    // glRotatef(theta, 1.0, 0.0, 0.0);
 
     
     glVertexPointer(3,          
@@ -628,7 +716,7 @@ void display_func() {
                    colors);
 
     // glDrawArrays(GL_QUADS, 0, 24);
-    glDrawArrays(GL_QUADS, 0, 672); // 144
+    glDrawArrays(GL_QUADS, 0, 6*4*42); // 144
     
     
     glFlush();         
@@ -652,8 +740,10 @@ int main (int argc, char **argv) {
     init_camera();
     chair_1 = make_chair();
     chair_2 = make_chair();
-    make_cube();
+    make_carpet();
     make_table();
+    make_lamp();
+    make_cup();
     objects = init_scene();
     colors = init_color();
     
