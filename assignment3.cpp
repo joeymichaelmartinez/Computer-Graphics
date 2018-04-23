@@ -5,8 +5,9 @@
  
  Collaborators: Hardy, John
  
- Project Summary: A short paragraph (3-4 sentences) describing the work you
- did for the project.
+ Project Summary: /***
+    Found how to calculate the normals and the h vector based on given points. Also found how to add color to my shapes, and 
+    then update that based on the shading algorithm. Finally, I made all of the new objects and applied this shading.
  ***/
 
 
@@ -27,7 +28,6 @@
 #include <cstdlib>
 using namespace std;
 
-int number_of_sides;
 GLfloat* objects;
 GLfloat* colors;
 vector<GLfloat> light_source = {0.0, 2.0, 5.0};
@@ -488,8 +488,6 @@ ObjectModel make_chair() {
 
     chair_1.set_points(to_cartesian_coord(collection_of_chair_pieces));
 
-    number_of_sides = number_of_sides + collection_of_chair_pieces.size();
-
     vector<GLfloat> colors;
     color_cube(colors, .746, .5, .25);
     color_cube(colors, .746, .5, .25);
@@ -529,8 +527,6 @@ ObjectModel make_table() {
     collection_of_table_pieces = join_vectors(collection_of_table_pieces, table_leg_4);
     collection_of_table_pieces = join_vectors(collection_of_table_pieces, table_top);
 
-    number_of_sides = number_of_sides + collection_of_table_pieces.size();
-
     vector<GLfloat> colors;
     table.set_points(to_cartesian_coord(collection_of_table_pieces));
     colors = color_cube(colors, .398, .199, 0);
@@ -551,7 +547,6 @@ ObjectModel make_carpet() {
     unit_cube =  to_cartesian_coord(mat_mult(translation_matrix(0, -2.5, 0), mat_mult(scaling_matrix(20, .2, 40), unit_cube))),
     carpet.set_points((unit_cube));
     carpet.set_normals(generate_normals(carpet.get_points()));
-    
     color_cube(colors, .199, .398, 1);
     carpet.set_base_colors(colors);
     carpet = apply_shading(carpet, light_source, camera);
@@ -577,8 +572,6 @@ ObjectModel make_lamp() {
     collection_of_lamp_pieces = join_vectors(collection_of_lamp_pieces, shade_3);
     collection_of_lamp_pieces = join_vectors(collection_of_lamp_pieces, shade_4);
 
-    number_of_sides = number_of_sides + collection_of_lamp_pieces.size();
-
     vector<GLfloat> colors;
     lamp.set_points(to_cartesian_coord(collection_of_lamp_pieces));
     colors = color_cube(colors, .5, .5, 0.5);
@@ -598,14 +591,14 @@ ObjectModel make_cup() {
     vector<GLfloat> unit_cube = to_homogenous_coord(build_cube());
     vector<GLfloat> collection_of_cup_pieces;
 
-    vector<GLfloat> left = mat_mult(translation_matrix(0.4f, 9.0f, 0.0f), mat_mult(scaling_matrix(0.2, 2.5f, 1.0f), unit_cube));
-    vector<GLfloat> right = mat_mult(translation_matrix(-0.4f, 9.0f, 0.0f), mat_mult(scaling_matrix(0.2, 2.5f, 1.0f), unit_cube));
-    vector<GLfloat> front = mat_mult(translation_matrix(0.0f, 9.0f, 0.4f), mat_mult(scaling_matrix(1.0, 2.5f, 0.2f), unit_cube));
-    vector<GLfloat> back = mat_mult(translation_matrix(0.0f, 9.0f, -0.4f), mat_mult(scaling_matrix(1.0, 2.5f, 0.2f), unit_cube));
-    vector<GLfloat> bottom = mat_mult(translation_matrix(0.0f, 7.0f, 0.0f), mat_mult(scaling_matrix(1.0, 0.2f, 1.0f), unit_cube));
-    vector<GLfloat> handle_1 = mat_mult(translation_matrix(0.0f, 9.5f, -0.8f), mat_mult(scaling_matrix(0.4f, 0.2f, 0.6f), unit_cube));
-    vector<GLfloat> handle_2 = mat_mult(translation_matrix(0.0f, 9.0f, -1.0f), mat_mult(scaling_matrix(0.4f, 1.0f, 0.2f), unit_cube));
-    vector<GLfloat> handle_3 = mat_mult(translation_matrix(0.0f, 8.5f, -0.8f), mat_mult(scaling_matrix(0.4f, 0.2f, 0.6f), unit_cube));
+    vector<GLfloat> left = mat_mult(translation_matrix(0.4f, 8.5f, 0.0f), mat_mult(scaling_matrix(0.2, 2.5f, 1.0f), unit_cube));
+    vector<GLfloat> right = mat_mult(translation_matrix(-0.4f, 8.5f, 0.0f), mat_mult(scaling_matrix(0.2, 2.5f, 1.0f), unit_cube));
+    vector<GLfloat> front = mat_mult(translation_matrix(0.0f, 8.5f, 0.4f), mat_mult(scaling_matrix(1.0, 2.5f, 0.2f), unit_cube));
+    vector<GLfloat> back = mat_mult(translation_matrix(0.0f, 8.5f, -0.4f), mat_mult(scaling_matrix(1.0, 2.5f, 0.2f), unit_cube));
+    vector<GLfloat> bottom = mat_mult(translation_matrix(0.0f, 6.5f, 0.0f), mat_mult(scaling_matrix(1.0, 0.2f, 1.0f), unit_cube));
+    vector<GLfloat> handle_1 = mat_mult(translation_matrix(0.0f, 9.0f, -0.8f), mat_mult(scaling_matrix(0.4f, 0.2f, 0.6f), unit_cube));
+    vector<GLfloat> handle_2 = mat_mult(translation_matrix(0.0f, 8.5f, -1.0f), mat_mult(scaling_matrix(0.4f, 1.0f, 0.2f), unit_cube));
+    vector<GLfloat> handle_3 = mat_mult(translation_matrix(0.0f, 8.0f, -0.8f), mat_mult(scaling_matrix(0.4f, 0.2f, 0.6f), unit_cube));
     
     collection_of_cup_pieces = join_vectors(collection_of_cup_pieces, left);
     collection_of_cup_pieces = join_vectors(collection_of_cup_pieces, right);
@@ -615,8 +608,6 @@ ObjectModel make_cup() {
     collection_of_cup_pieces = join_vectors(collection_of_cup_pieces, handle_1);
     collection_of_cup_pieces = join_vectors(collection_of_cup_pieces, handle_2);
     collection_of_cup_pieces = join_vectors(collection_of_cup_pieces, handle_3);
-
-    number_of_sides = number_of_sides + collection_of_cup_pieces.size();
 
     vector<GLfloat> colors;
     cup.set_points(to_cartesian_coord(collection_of_cup_pieces));
@@ -715,8 +706,7 @@ void display_func() {
                    0,
                    colors);
 
-    // glDrawArrays(GL_QUADS, 0, 24);
-    glDrawArrays(GL_QUADS, 0, 6*4*42); // 144
+    glDrawArrays(GL_QUADS, 0, 6*4*42);
     
     
     glFlush();         
@@ -729,13 +719,11 @@ void idle_func() {
 }
 
 int main (int argc, char **argv) {
-    // Initialize GLUT
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
     glutInitWindowSize(800, 600);
-    // Create a window with rendering context and everything else we need
-    glutCreateWindow("Assignment 3");
 
+    glutCreateWindow("Assignment 3");
     setup();
     init_camera();
     chair_1 = make_chair();
@@ -747,9 +735,7 @@ int main (int argc, char **argv) {
     objects = init_scene();
     colors = init_color();
     
-    // Set up our display function
     glutDisplayFunc(display_func);
-    // Render our world
 
     glutIdleFunc(idle_func);
     glutMainLoop();
@@ -757,9 +743,6 @@ int main (int argc, char **argv) {
 
     delete objects;
     delete colors;
-    // Remember to call "delete" on your dynmically allocated arrays
-    // such that you don't suffer from memory leaks. e.g.
-    // delete arr;
 
     return 0;
 }
